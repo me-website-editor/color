@@ -7,7 +7,7 @@ const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'pixelcraft-demo-secret-key';
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.static(__dirname));
 
 // Demo in-memory user store (ephemeral)
 const users = [];
