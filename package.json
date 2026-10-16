@@ -1,0 +1,14 @@
+{
+  "name": "pixelcraft-image-editor",
+  "version": "1.0.0",
+  "description": "Simple image editor with email/password auth (demo) for Vercel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
