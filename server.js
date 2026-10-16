@@ -8,13 +8,22 @@ const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'pixelcraft-demo-secret-key';
 const MONGO_URI = process.env.MONGO_URI;
 
-// الاتصال بقاعدة بيانات MongoDB Atlas
-if (MONGO_URI) {
-  mongoose.connect(MONGO_URI)
-    .then(() => console.log('✅ Connected to MongoDB Atlas!'))
-    .catch((err) => console.error('❌ MongoDB Connection Error:', err));
-} else {
-  console.warn('⚠️ MONGO_URI environment variable is missing.');
+
+let cachedDb = null;
+
+async function connectDB() {
+  if (cachedDb && mongoose.connection.readyState === 1) {
+    return cachedDb;
+  }
+  if (!MONGO_URI) {
+    throw new Error('MONGO_URI is missing in environment variables');
+  }
+  const db = await mongoose.connect(MONGO_URI, {
+    serverSelectionTimeoutMS: 5000,
+  });
+  cachedDb = db;
+  console.log('✅ Connected to MongoDB Atlas successfully!');
+  return db;
 }
 
 // تعريف جدول (Schema & Model) المستخدمين في قاعدة البيانات
