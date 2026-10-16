@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PixelCraft — محرر الصور</title>
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="auth.js"></script>
+    <script defer src="script.js"></script>
+    <script defer src="filters.js"></script>
+  </head>
+  <body>
+    <!-- Auth modal -->
+    <div id="authModal" class="modal active">
+      <div class="modal-content">
+        <div id="loginForm" class="auth-form active">
+          <div class="auth-header">
+            <div class="brand-icon-auth">P</div>
+            <h1>PixelCraft</h1>
+            <p>سجل دخول أو أنشئ حساب لتبدأ</p>
+          </div>
+
+          <form id="loginFormElement" novalidate>
+            <div class="form-group">
+              <label for="loginEmail">البريد الإلكتروني</label>
+              <input id="loginEmail" type="email" required />
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">كلمة المرور</label>
+              <input id="loginPassword" type="password" required />
+            </div>
+            <button type="submit" class="primary-btn full">تسجيل الدخول</button>
+            <div class="auth-divider">أو</div>
+            <button type="button" class="ghost-btn full" id="switchToSignupBtn">إنشاء حساب جديد</button>
+            <div id="loginError" class="error-message" role="alert"></div>
+          </form>
+        </div>
+
+        <div id="signupForm" class="auth-form">
+          <div class="auth-header">
+            <div class="brand-icon-auth">P</div>
+            <h1>إنشاء حساب</h1>
+          </div>
+
+          <form id="signupFormElement" novalidate>
+            <div class="form-group">
+              <label for="signupName">الاسم</label>
+              <input id="signupName" type="text" required />
+            </div>
+            <div class="form-group">
+              <label for="signupEmail">البريد الإلكتروني</label>
+              <input id="signupEmail" type="email" required />
+            </div>
+            <div class="form-group">
+              <label for="signupPassword">كلمة المرور</label>
+              <input id="signupPassword" type="password" minlength="6" required />
+            </div>
+            <div class="form-group">
+              <label for="signupConfirm">تأكيد كلمة المرور</label>
+              <input id="signupConfirm" type="password" minlength="6" required />
+            </div>
+            <button type="submit" class="primary-btn full">إنشاء حساب</button>
+            <div class="auth-divider">أو</div>
+            <button type="button" class="ghost-btn full" id="switchToLoginBtn">لديك حساب؟ تسجيل دخول</button>
+            <div id="signupError" class="error-message" role="alert"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main app -->
+    <div id="mainApp" class="page-shell hidden">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-icon">P</div>
+          <div class="brand-text">
+            <span class="brand-name">PixelCraft</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span id="userWelcome" class="user-welcome"></span>
+          <button id="logoutBtn" class="ghost-btn">تسجيل الخروج</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="editor-section">
+          <div class="panel controls-panel">
+            <div class="panel-head">
+              <h2>إعدادات الصورة</h2>
+            </div>
+
+            <div class="upload-box">
+              <input id="imageUpload" type="file" accept="image/*" hidden />
+              <label for="imageUpload" class="upload-label">
+                <span class="upload-icon">⬆️</span>
+                <strong>اختر صورة</strong>
+                <small>أو اسحبها هنا</small>
+              </label>
+            </div>
+
+            <div class="filters-section">
+              <h3>فلاتر جاهزة</h3>
+              <div class="filters-grid">
+                <button class="filter-btn active" data-filter="none">أصلي</button>
+                <button class="filter-btn" data-filter="grayscale">أبيض وأسود</button>
+                <button class="filter-btn" data-filter="sepia">سيبيا</button>
+                <button class="filter-btn" data-filter="vivid">حيوي</button>
+              </div>
+            </div>
+
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="brightness">الإضاءة</label>
+                <span id="brightnessValue">100%</span>
+              </div>
+              <input id="brightness" type="range" min="0" max="200" value="100" />
+            </div>
+
+            <div class="button-stack">
+              <button id="downloadBtn" class="primary-btn full">تحميل الصورة</button>
+              <button id="resetBtn" class="ghost-btn full">إعادة</button>
+            </div>
+          </div>
+
+          <div class="panel preview-panel">
+            <div class="preview-toolbar">
+              <span class="toolbar-pill">Live preview</span>
+              <span class="toolbar-pill muted" id="imageInfo">لا توجد صورة</span>
+            </div>
+
+            <div class="canvas-stage">
+              <canvas id="editorCanvas" width="900" height="600"></canvas>
+              <div id="emptyState" class="empty-state">
+                <div class="empty-icon">🖼️</div>
+                <h3>ارفع صورة لتعديلها</h3>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
