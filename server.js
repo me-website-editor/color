@@ -2,19 +2,36 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const mongoose = require('mongoose');
 
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'pixelcraft-demo-secret-key';
+const MONGO_URI = process.env.MONGO_URI;
+
+// الاتصال بقاعدة بيانات MongoDB Atlas
+if (MONGO_URI) {
+  mongoose.connect(MONGO_URI)
+    .then(() => console.log('✅ Connected to MongoDB Atlas!'))
+    .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+} else {
+  console.warn('⚠️ MONGO_URI environment variable is missing.');
+}
+
+// تعريف جدول (Schema & Model) المستخدمين في قاعدة البيانات
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true }
+}, { timestamps: true });
+
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Demo in-memory user store (ephemeral)
-const users = [];
-
 // Create JWT token
 function createToken(user) {
-  return jwt.sign({ id: user.id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 // Auth middleware
@@ -41,14 +58,18 @@ app.post('/api/register', async (req, res) => {
     if (String(password).length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
 
     const normalized = String(email).trim().toLowerCase();
-    if (users.find(u => u.email === normalized)) return res.status(409).json({ message: 'Email already registered' });
+    const existingUser = await User.findOne({ email: normalized });
+    if (existingUser) return res.status(409).json({ message: 'Email already registered' });
 
     const hash = await bcrypt.hash(String(password), 10);
-    const user = { id: Date.now(), name: String(name).trim(), email: normalized, password: hash };
-    users.push(user);
+    const user = await User.create({
+      name: String(name).trim(),
+      email: normalized,
+      password: hash
+    });
 
-    const safe = { id: user.id, name: user.name, email: user.email };
-    return res.status(201).json({ message: 'Registered', token: createToken(safe), user: safe });
+    const safe = { id: user._id, name: user.name, email: user.email };
+    return res.status(201).json({ message: 'Registered', token: createToken(user), user: safe });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Server error' });
@@ -62,14 +83,14 @@ app.post('/api/login', async (req, res) => {
     if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
 
     const normalized = String(email).trim().toLowerCase();
-    const user = users.find(u => u.email === normalized);
+    const user = await User.findOne({ email: normalized });
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
     const ok = await bcrypt.compare(String(password), user.password);
     if (!ok) return res.status(401).json({ message: 'Invalid email or password' });
 
-    const safe = { id: user.id, name: user.name, email: user.email };
-    return res.json({ message: 'Login successful', token: createToken(safe), user: safe });
+    const safe = { id: user._id, name: user.name, email: user.email };
+    return res.json({ message: 'Login successful', token: createToken(user), user: safe });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Server error' });
@@ -77,16 +98,21 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Me
-app.get('/api/me', authMiddleware, (req, res) => {
-  const user = users.find(u => u.id === Number(req.user.id));
-  if (!user) return res.status(404).json({ message: 'User not found' });
-  return res.json({ user: { id: user.id, name: user.name, email: user.email } });
+app.get('/api/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json({ user: { id: user._id, name: user.name, email: user.email } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // Serve index.html (fallback for client-side routes)
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ message: 'API route not found' });
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Export handler for Vercel
