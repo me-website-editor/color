@@ -885,3 +885,53 @@ canvas {
     grid-template-columns: 1fr;
   }
 }
+/* أدوات تعديل الصورة */
+.edit-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.edit-tools button {
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease, transform 0.2s ease;
+}
+
+.edit-tools button:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+  background: rgba(89, 208, 255, 0.08);
+  color: var(--primary);
+}
+
+.edit-tools button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.edit-tools button[data-action="reset"] {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+
+.edit-tools button[data-action="reset"]:hover {
+  border-color: rgba(255, 125, 125, 0.6);
+  color: #ff9b9b;
+  background: rgba(255, 125, 125, 0.07);
+}
+
+@media (max-width: 600px) {
+  .edit-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
