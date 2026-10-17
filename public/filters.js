@@ -1,45 +1,95 @@
 const FILTER_PRESETS = {
-  none:       { brightness: 100, contrast: 100, saturation: 100, sepia: 0, grayscale: 0 },
-  grayscale:  { brightness: 100, contrast: 100, saturation: 0,   sepia: 0, grayscale: 100 },
-  sepia:      { brightness: 100, contrast: 100, saturation: 80,  sepia: 100, grayscale: 0 },
-  vivid:      { brightness: 110, contrast: 120, saturation: 145, sepia: 0, grayscale: 0 },
-  soft:       { brightness: 108, contrast: 90,  saturation: 90,  sepia: 8, grayscale: 0 },
-  bright:     { brightness: 125, contrast: 105, saturation: 110, sepia: 0, grayscale: 0 },
-  matte:      { brightness: 105, contrast: 85,  saturation: 80,  sepia: 12, grayscale: 0 },
-  pink:       { brightness: 108, contrast: 105, saturation: 115, sepia: 18, grayscale: 0 },
-  warm:       { brightness: 105, contrast: 105, saturation: 110, sepia: 25, grayscale: 0 },
-  cool:       { brightness: 100, contrast: 105, saturation: 110, sepia: 0, grayscale: 0 },
-  vintage:    { brightness: 95,  contrast: 90,  saturation: 75,  sepia: 45, grayscale: 0 },
-  dramatic:   { brightness: 95,  contrast: 135, saturation: 110, sepia: 0, grayscale: 0 },
-  faded:      { brightness: 112, contrast: 78,  saturation: 75,  sepia: 10, grayscale: 0 },
-  golden:     { brightness: 108, contrast: 110, saturation: 120, sepia: 35, grayscale: 0 },
-  rose:       { brightness: 105, contrast: 100, saturation: 105, sepia: 28, grayscale: 0 },
-  moody:      { brightness: 85,  contrast: 120, saturation: 85,  sepia: 5, grayscale: 0 },
-  crisp:      { brightness: 103, contrast: 125, saturation: 115, sepia: 0, grayscale: 0 },
-  pastel:     { brightness: 115, contrast: 82,  saturation: 75,  sepia: 8, grayscale: 0 },
-  noir:       { brightness: 90,  contrast: 135, saturation: 0,   sepia: 0, grayscale: 100 },
-  arctic:     { brightness: 108, contrast: 105, saturation: 85,  sepia: 0, grayscale: 0 },
-  sunset:     { brightness: 105, contrast: 110, saturation: 130, sepia: 30, grayscale: 0 },
-  fadedFilm:  { brightness: 108, contrast: 82,  saturation: 68,  sepia: 22, grayscale: 0 },
-  punch:      { brightness: 105, contrast: 140, saturation: 135, sepia: 0, grayscale: 0 },
-  dreamy:     { brightness: 118, contrast: 85,  saturation: 95,  sepia: 12, grayscale: 0 },
-  natural:    { brightness: 103, contrast: 102, saturation: 105, sepia: 0, grayscale: 0 },
+  none: { brightness: 100, contrast: 100, saturation: 100, blur: 0, sepia: 0, grayscale: 0, hue: 0 },
+  grayscale: { brightness: 100, contrast: 110, saturation: 0, blur: 0, sepia: 0, grayscale: 100, hue: 0 },
+  sepia: { brightness: 100, contrast: 100, saturation: 80, blur: 0, sepia: 100, grayscale: 0, hue: 0 },
+  vintage: { brightness: 110, contrast: 85, saturation: 70, blur: 0, sepia: 40, grayscale: 0, hue: 0 },
+  noir: { brightness: 90, contrast: 150, saturation: 0, blur: 0, sepia: 0, grayscale: 100, hue: 0 },
+  warm: { brightness: 105, contrast: 105, saturation: 120, blur: 0, sepia: 20, grayscale: 0, hue: 15 },
+  cool: { brightness: 100, contrast: 105, saturation: 90, blur: 0, sepia: 0, grayscale: 0, hue: 200 },
+  dramatic: { brightness: 90, contrast: 160, saturation: 110, blur: 0, sepia: 0, grayscale: 0, hue: 0 },
+  faded: { brightness: 120, contrast: 80, saturation: 60, blur: 0, sepia: 15, grayscale: 0, hue: 0 },
+  vivid: { brightness: 110, contrast: 130, saturation: 160, blur: 0, sepia: 0, grayscale: 0, hue: 0 },
+  sunset: { brightness: 105, contrast: 110, saturation: 130, blur: 0, sepia: 25, grayscale: 0, hue: 340 },
+  ocean: { brightness: 100, contrast: 110, saturation: 100, blur: 0, sepia: 0, grayscale: 0, hue: 190 },
+  forest: { brightness: 95, contrast: 110, saturation: 120, blur: 0, sepia: 10, grayscale: 0, hue: 100 },
+  retro: { brightness: 110, contrast: 90, saturation: 80, blur: 0, sepia: 50, grayscale: 0, hue: 0 },
+  cinema: { brightness: 95, contrast: 140, saturation: 90, blur: 0, sepia: 10, grayscale: 0, hue: 0 },
+  polaroid: { brightness: 115, contrast: 90, saturation: 70, blur: 0, sepia: 30, grayscale: 0, hue: 0 },
+    soft: {
+    brightness: 108, contrast: 90, saturation: 85,
+    blur: 0, sepia: 5, grayscale: 0, hue: 0
+  },
+  bright: {
+    brightness: 125, contrast: 105, saturation: 110,
+    blur: 0, sepia: 0, grayscale: 0, hue: 0
+  },
+  matte: {
+    brightness: 108, contrast: 82, saturation: 80,
+    blur: 0, sepia: 8, grayscale: 0, hue: 0
+  },
+  pink: {
+    brightness: 105, contrast: 105, saturation: 125,
+    blur: 0, sepia: 10, grayscale: 0, hue: 320
+  },
 };
 
 function applyPreset(presetName) {
   const preset = FILTER_PRESETS[presetName];
   if (!preset) return;
 
-  if (typeof state !== "undefined") {
-    Object.assign(state, preset);
-  }
+  // تحديث state اللي موجود في script.js
+  Object.entries(preset).forEach(([key, value]) => {
+    state[key] = value;
+    if (controls[key]) controls[key].value = value;
+  });
 
-  if (typeof controls !== "undefined") {
-    Object.keys(preset).forEach((key) => {
-      if (controls[key]) controls[key].value = preset[key];
-    });
-  }
-
-  if (typeof updateControlLabels === "function") updateControlLabels();
-  if (typeof drawImageToCanvas === "function") drawImageToCanvas();
+  updateControlLabels();
+  if (state.image) drawImageToCanvas();
 }
+
+function setupPresetButtons() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // إزالة active من الكل
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // تطبيق الفلتر
+      applyPreset(btn.dataset.filter);
+    });
+  });
+}
+
+function setupEditTools() {
+  const tools = {
+    rotateLeft: () => {
+      state.rotation = (state.rotation || 0) - 90;
+      drawImageToCanvas();
+    },
+    rotateRight: () => {
+      state.rotation = (state.rotation || 0) + 90;
+      drawImageToCanvas();
+    },
+    flipHorizontal: () => {
+      state.flipX = !state.flipX;
+      drawImageToCanvas();
+    },
+    flipVertical: () => {
+      state.flipY = !state.flipY;
+      drawImageToCanvas();
+    },
+    reset: () => {
+      state.rotation = 0;
+      state.flipX = false;
+      state.flipY = false;
+      applyPreset("none");
+    },
+  };
+
+  Object.entries(tools).forEach(([action, callback]) => {
+    document.querySelector(`[data-action="${action}"]`)
+      ?.addEventListener("click", callback);
+  });
+}
+
+setupEditTools();
