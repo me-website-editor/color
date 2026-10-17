@@ -1,5 +1,4 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -59,10 +58,10 @@ function authMiddleware(req, res, next) {
 // Health Check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// Register
+// Register (بدون تشفير كلمة المرور)
 app.post('/api/register', async (req, res) => {
   try {
-    await connectDB(); // تأكيد الاتصال بقاعدة البيانات قبل العملية
+    await connectDB();
 
     const { name, email, password } = req.body || {};
     if (!name || !email || !password) return res.status(400).json({ message: 'All fields are required' });
@@ -72,11 +71,11 @@ app.post('/api/register', async (req, res) => {
     const existingUser = await User.findOne({ email: normalized });
     if (existingUser) return res.status(409).json({ message: 'Email already registered' });
 
-    const hash = await bcrypt.hash(String(password), 10);
+    // حفظ كلمة المرور مباشرة كنص صريح
     const user = await User.create({
       name: String(name).trim(),
       email: normalized,
-      password: hash
+      password: String(password)
     });
 
     const safe = { id: user._id, name: user.name, email: user.email };
@@ -87,10 +86,10 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Login
+// Login (مقارنة مباشرة للنصوص)
 app.post('/api/login', async (req, res) => {
   try {
-    await connectDB(); // تأكيد الاتصال بقاعدة البيانات قبل العملية
+    await connectDB();
 
     const { email, password } = req.body || {};
     if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
@@ -99,7 +98,8 @@ app.post('/api/login', async (req, res) => {
     const user = await User.findOne({ email: normalized });
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
-    const ok = await bcrypt.compare(String(password), user.password);
+    // المقارنة المباشرة للنص العادي
+    const ok = (String(password) === user.password);
     if (!ok) return res.status(401).json({ message: 'Invalid email or password' });
 
     const safe = { id: user._id, name: user.name, email: user.email };
@@ -113,7 +113,7 @@ app.post('/api/login', async (req, res) => {
 // Me
 app.get('/api/me', authMiddleware, async (req, res) => {
   try {
-    await connectDB(); // تأكيد الاتصال بقاعدة البيانات قبل العملية
+    await connectDB();
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
