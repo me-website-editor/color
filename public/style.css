@@ -999,23 +999,7 @@ canvas {
   gap: 10px;
   margin-top: 10px;
 }
-    #clearImageBtn {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.025);
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-}
 
-#clearImageBtn:hover {
-  border-color: rgba(255, 125, 125, 0.6);
-  color: #ff9b9b;
-  background: rgba(255, 125, 125, 0.07);
-}
     align-items: flex-start;
     flex-wrap: wrap;
   }
