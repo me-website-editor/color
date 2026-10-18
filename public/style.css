@@ -992,6 +992,13 @@ canvas {
   }
 
   .preview-toolbar {
+    /* زر مسح الصورة */
+.upload-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
     align-items: flex-start;
     flex-wrap: wrap;
   }
