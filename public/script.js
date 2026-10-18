@@ -9,7 +9,7 @@
   const downloadBtn = $('downloadBtn');
   const resetBtn = $('resetBtn');
   const uploadLabel = document.querySelector('.upload-label');
-    const clearImageBtn = document.getElementById('clearImageBtn');
+  const clearImageBtn = $('clearImageBtn');
 
   if (!canvas || !ctx || !fileInput || !emptyState || !imageInfo) {
     console.error('بعض عناصر محرر الصور غير موجودة في HTML.');
@@ -213,6 +213,21 @@
     }, 'image/png');
   }
 
+  function clearImage() {
+    state.image = null;
+    state.filename = 'edited-image';
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = 1;
+    canvas.height = 1;
+
+    emptyState.classList.remove('hidden');
+    imageInfo.textContent = '';
+    fileInput.value = '';
+
+    setDefaults();
+  }
+
   Object.entries(controls).forEach(([key, control]) => {
     if (!control) return;
 
@@ -284,6 +299,7 @@
 
   downloadBtn?.addEventListener('click', downloadImage);
   resetBtn?.addEventListener('click', setDefaults);
+  clearImageBtn?.addEventListener('click', clearImage);
 
   updateLabels();
 })();
