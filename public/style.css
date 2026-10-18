@@ -1187,3 +1187,51 @@ canvas {
     font-size: 11px;
   }
 }
+@media (max-width: 600px) {
+  .modal {
+    padding: 20px;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 440px;
+    max-height: calc(100dvh - 40px);
+    padding: 26px 22px;
+    border-radius: 24px;
+  }
+
+  .auth-header {
+    margin-bottom: 24px;
+  }
+
+  .brand-icon-auth {
+    width: 64px;
+    height: 64px;
+    font-size: 1.8rem;
+  }
+
+  .auth-header h1 {
+    font-size: 1.9rem;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group input {
+    min-height: 50px;
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+
+  .modal-content .primary-btn,
+  .modal-content .secondary-btn,
+  .modal-content .ghost-btn {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .auth-footer {
+    font-size: 13px;
+  }
+}
