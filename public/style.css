@@ -1019,7 +1019,9 @@ canvas {
   }
 
   .preview-toolbar {
+    
     align-items: flex-start;
     flex-wrap: wrap;
   }
 }
+
