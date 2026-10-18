@@ -1,197 +1,277 @@
-(function () {
-  "use strict";
+const canvas = document.getElementById('editorCanvas');
+const ctx = canvas.getContext('2d');
+const fileInput = document.getElementById('imageUpload');
+const emptyState = document.getElementById('emptyState');
+const imageInfo = document.getElementById('imageInfo');
+const downloadBtn = document.getElementById('downloadBtn');
+const resetBtn = document.getElementById('resetBtn');
+const heroPreview = document.getElementById('heroPreview');
+const generateSampleBtn = document.getElementById('generateSample');
 
-  const canvas = document.getElementById("editorCanvas");
-  const ctx = canvas ? canvas.getContext("2d") : null;
-  const fileInput = document.getElementById("imageUpload");
-  const emptyState = document.getElementById("emptyState");
-  const imageInfo = document.getElementById("imageInfo");
-  const downloadBtn = document.getElementById("downloadBtn");
-  const resetBtn = document.getElementById("resetBtn");
+const controls = {
+  brightness: document.getElementById('brightness'),
+  contrast: document.getElementById('contrast'),
+  saturation: document.getElementById('saturation'),
+  blur: document.getElementById('blur'),
+  sepia: document.getElementById('sepia'),
+  grayscale: document.getElementById('grayscale'),
+  hue: document.getElementById('hue'),
+  rotation: document.getElementById('rotation'),
+  zoom: document.getElementById('zoom'),
+  flipX: document.getElementById('flipX'),
+  flipY: document.getElementById('flipY'),
+};
 
-  const brightnessInput = document.getElementById("brightness");
-  const brightnessValue = document.getElementById("brightnessValue");
+const valueLabels = {
+  brightness: document.getElementById('brightnessValue'),
+  contrast: document.getElementById('contrastValue'),
+  saturation: document.getElementById('saturationValue'),
+  blur: document.getElementById('blurValue'),
+  sepia: document.getElementById('sepiaValue'),
+  grayscale: document.getElementById('grayscaleValue'),
+  hue: document.getElementById('hueValue'),
+};
 
-  const presets = {
-    none:      { brightness: 100, contrast: 100, saturation: 100, sepia: 0,   grayscale: 0 },
-    grayscale: { brightness: 100, contrast: 100, saturation: 0,   sepia: 0,   grayscale: 100 },
-    sepia:     { brightness: 100, contrast: 100, saturation: 80,  sepia: 100, grayscale: 0 },
-    vivid:     { brightness: 110, contrast: 120, saturation: 145, sepia: 0,   grayscale: 0 },
-    soft:      { brightness: 108, contrast: 90,  saturation: 90,  sepia: 8,   grayscale: 0 },
-    bright:    { brightness: 125, contrast: 105, saturation: 110, sepia: 0,   grayscale: 0 },
-    matte:     { brightness: 105, contrast: 85,  saturation: 80,  sepia: 12,  grayscale: 0 },
-    pink:      { brightness: 108, contrast: 105, saturation: 115, sepia: 18,  grayscale: 0 },
-    warm:      { brightness: 105, contrast: 105, saturation: 110, sepia: 25,  grayscale: 0 },
-    cool:      { brightness: 100, contrast: 105, saturation: 110, sepia: 0,   grayscale: 0 },
-    vintage:   { brightness: 95,  contrast: 90,  saturation: 75,  sepia: 45,  grayscale: 0 },
-    dramatic:  { brightness: 95,  contrast: 135, saturation: 110, sepia: 0,   grayscale: 0 },
-    faded:     { brightness: 112, contrast: 78,  saturation: 75,  sepia: 10,  grayscale: 0 },
-    golden:    { brightness: 108, contrast: 110, saturation: 120, sepia: 35,  grayscale: 0 },
-    rose:      { brightness: 105, contrast: 100, saturation: 105, sepia: 28,  grayscale: 0 },
-    moody:     { brightness: 85,  contrast: 120, saturation: 85,  sepia: 5,   grayscale: 0 },
-    crisp:     { brightness: 103, contrast: 125, saturation: 115, sepia: 0,   grayscale: 0 },
-    pastel:    { brightness: 115, contrast: 82,  saturation: 75,  sepia: 8,   grayscale: 0 },
-    noir:      { brightness: 90,  contrast: 135, saturation: 0,   sepia: 0,   grayscale: 100 },
-    arctic:    { brightness: 108, contrast: 105, saturation: 85,  sepia: 0,   grayscale: 0 },
-    sunset:    { brightness: 105, contrast: 110, saturation: 130, sepia: 30,  grayscale: 0 },
-    fadedFilm: { brightness: 108, contrast: 82,  saturation: 68,  sepia: 22,  grayscale: 0 },
-    punch:     { brightness: 105, contrast: 140, saturation: 135, sepia: 0,   grayscale: 0 },
-    dreamy:    { brightness: 118, contrast: 85,  saturation: 95,  sepia: 12,  grayscale: 0 },
-    natural:   { brightness: 103, contrast: 102, saturation: 105, sepia: 0,   grayscale: 0 },
-  };
+const DEFAULTS = {
+  brightness: 100,
+  contrast: 100,
+  saturation: 100,
+  blur: 0,
+  sepia: 0,
+  grayscale: 0,
+  hue: 0,
+  rotation: 0,
+  zoom: 100,
+  flipX: false,
+  flipY: false,
+};
 
-  const state = {
-    image: null,
-    filename: "edited-image",
-    brightness: 100,
-    contrast: 100,
-    saturation: 100,
-    sepia: 0,
-    grayscale: 0,
-  };
+const FILTER_PRESETS = {
+  none: { brightness: 100, contrast: 100, saturation: 100, blur: 0, sepia: 0, grayscale: 0, hue: 0 },
+  grayscale: { brightness: 100, contrast: 110, saturation: 0, blur: 0, sepia: 0, grayscale: 100, hue: 0 },
+  sepia: { brightness: 100, contrast: 100, saturation: 80, blur: 0, sepia: 100, grayscale: 0, hue: 0 },
+  vintage: { brightness: 110, contrast: 85, saturation: 70, blur: 0, sepia: 40, grayscale: 0, hue: 0 },
+  noir: { brightness: 90, contrast: 150, saturation: 0, blur: 0, sepia: 0, grayscale: 100, hue: 0 },
+  warm: { brightness: 105, contrast: 105, saturation: 120, blur: 0, sepia: 20, grayscale: 0, hue: 15 },
+  cool: { brightness: 100, contrast: 105, saturation: 90, blur: 0, sepia: 0, grayscale: 0, hue: 200 },
+  dramatic: { brightness: 90, contrast: 160, saturation: 110, blur: 0, sepia: 0, grayscale: 0, hue: 0 },
+  faded: { brightness: 120, contrast: 80, saturation: 60, blur: 0, sepia: 15, grayscale: 0, hue: 0 },
+  vivid: { brightness: 110, contrast: 130, saturation: 160, blur: 0, sepia: 0, grayscale: 0, hue: 0 },
+  sunset: { brightness: 105, contrast: 110, saturation: 130, blur: 0, sepia: 25, grayscale: 0, hue: 340 },
+  ocean: { brightness: 100, contrast: 110, saturation: 100, blur: 0, sepia: 0, grayscale: 0, hue: 190 },
+  forest: { brightness: 95, contrast: 110, saturation: 120, blur: 0, sepia: 10, grayscale: 0, hue: 100 },
+  retro: { brightness: 110, contrast: 90, saturation: 80, blur: 0, sepia: 50, grayscale: 0, hue: 0 },
+  cinema: { brightness: 95, contrast: 140, saturation: 90, blur: 0, sepia: 10, grayscale: 0, hue: 0 },
+  polaroid: { brightness: 115, contrast: 90, saturation: 70, blur: 0, sepia: 30, grayscale: 0, hue: 0 },
+};
 
-  function updateBrightnessLabel() {
-    if (brightnessValue) {
-      brightnessValue.textContent = `${state.brightness}%`;
+const state = {
+  image: null,
+  filename: 'edited-image',
+  ...DEFAULTS,
+};
+
+function updateControlLabels() {
+  valueLabels.brightness.textContent = `${state.brightness}%`;
+  valueLabels.contrast.textContent = `${state.contrast}%`;
+  valueLabels.saturation.textContent = `${state.saturation}%`;
+  valueLabels.blur.textContent = `${state.blur}px`;
+  valueLabels.sepia.textContent = `${state.sepia}%`;
+  valueLabels.grayscale.textContent = `${state.grayscale}%`;
+  valueLabels.hue.textContent = `${state.hue}°`;
+}
+
+function setDefaults() {
+  Object.entries(DEFAULTS).forEach(([key, value]) => {
+    state[key] = value;
+    if (key === 'flipX' || key === 'flipY') {
+      controls[key].checked = Boolean(value);
+    } else {
+      controls[key].value = value;
     }
-  }
+  });
+  updateControlLabels();
+}
 
-  function drawImage() {
-    if (!canvas || !ctx || !state.image) return;
+function drawImageToCanvas() {
+  const image = state.image;
+  if (!image) return;
 
-    const image = state.image;
-    const maxWidth = 900;
-    const maxHeight = 600;
-    const scale = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
-    const width = Math.round(image.width * scale);
-    const height = Math.round(image.height * scale);
+  const maxWidth = 900;
+  const maxHeight = 600;
+  const ratio = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
+  const drawWidth = image.width * ratio;
+  const drawHeight = image.height * ratio;
 
-    canvas.width = width;
-    canvas.height = height;
+  canvas.width = drawWidth;
+  canvas.height = drawHeight;
 
-    ctx.clearRect(0, 0, width, height);
-    ctx.filter = [
-      `brightness(${state.brightness}%)`,
-      `contrast(${state.contrast}%)`,
-      `saturate(${state.saturation}%)`,
-      `sepia(${state.sepia}%)`,
-      `grayscale(${state.grayscale}%)`,
-    ].join(" ");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.drawImage(image, 0, 0, width, height);
-    ctx.filter = "none";
+  const rotation = (state.rotation * Math.PI) / 180;
+  const zoomMultiplier = state.zoom / 100;
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
 
-    if (emptyState) emptyState.classList.add("hidden");
-    if (imageInfo) imageInfo.textContent = `${width} × ${height}`;
-  }
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.rotate(rotation);
+  ctx.scale(state.flipX ? -1 : 1, state.flipY ? -1 : 1);
+  ctx.filter = `brightness(${state.brightness}%) contrast(${state.contrast}%) saturate(${state.saturation}%) blur(${state.blur}px) sepia(${state.sepia}%) grayscale(${state.grayscale}%) hue-rotate(${state.hue}deg)`;
 
-  function applyPreset(name) {
-    const preset = presets[name];
-    if (!preset) return;
+  const scaledWidth = drawWidth * zoomMultiplier;
+  const scaledHeight = drawHeight * zoomMultiplier;
 
-    Object.assign(state, preset);
+  ctx.drawImage(image, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
 
-    if (brightnessInput) {
-      brightnessInput.value = state.brightness;
-    }
+  ctx.restore();
+  emptyState.classList.add('hidden');
+  imageInfo.textContent = `${Math.round(canvas.width)} × ${Math.round(canvas.height)}`;
+}
 
-    updateBrightnessLabel();
-    drawImage();
-  }
+function applyFilter(presetName) {
+  const preset = FILTER_PRESETS[presetName];
+  if (!preset) return;
 
-  function setActiveFilter(name) {
-    document.querySelectorAll(".filter-btn").forEach((button) => {
-      button.classList.toggle("active", button.dataset.filter === name);
+  Object.entries(preset).forEach(([key, value]) => {
+    state[key] = value;
+    if (controls[key]) controls[key].value = value;
+  });
+
+  updateControlLabels();
+  if (state.image) drawImageToCanvas();
+}
+
+function setupFilterButtons() {
+  const filterButtons = document.querySelectorAll('.filter-btn');
+
+  filterButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterButtons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const filterName = btn.getAttribute('data-filter');
+      applyFilter(filterName);
     });
-  }
+  });
+}
 
-  function loadImage(file) {
-    if (!file || !file.type.startsWith("image/")) return;
+function syncStateFromControls() {
+  state.brightness = Number(controls.brightness.value);
+  state.contrast = Number(controls.contrast.value);
+  state.saturation = Number(controls.saturation.value);
+  state.blur = Number(controls.blur.value);
+  state.sepia = Number(controls.sepia.value);
+  state.grayscale = Number(controls.grayscale.value);
+  state.hue = Number(controls.hue.value);
+  state.rotation = Number(controls.rotation.value);
+  state.zoom = Number(controls.zoom.value);
+  state.flipX = controls.flipX.checked;
+  state.flipY = controls.flipY.checked;
+  updateControlLabels();
 
-    const reader = new FileReader();
+  if (state.image) drawImageToCanvas();
+}
 
-    reader.onload = (event) => {
-      const image = new Image();
+function applyImageToEditor(file) {
+  if (!file || !file.type.startsWith('image/')) return;
 
-      image.onload = () => {
-        state.image = image;
-        state.filename = file.name.replace(/\.[^/.]+$/, "") || "edited";
-        drawImage();
-      };
-
-      image.onerror = () => {
-        alert("تعذر فتح الصورة. جرّب اختيار صورة أخرى.");
-      };
-
-      image.src = event.target.result;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      state.image = img;
+      state.filename = file.name.replace(/\.[^/.]+$/, '') || 'edited-image';
+      drawImageToCanvas();
     };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
-    reader.onerror = () => {
-      alert("تعذر قراءة الملف. جرّب اختيار صورة أخرى.");
-    };
+function downloadImage() {
+  if (!state.image) return;
 
-    reader.readAsDataURL(file);
-  }
+  canvas.toBlob((blob) => {
+    if (!blob) return;
 
-  function downloadImage() {
-    if (!canvas || !state.image) {
-      alert("ارفع صورة أولاً قبل تحميلها.");
-      return;
+    const link = document.createElement('a');
+    const fileUrl = URL.createObjectURL(blob);
+    link.href = fileUrl;
+    link.download = `${state.filename}-edited.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(fileUrl);
+  }, 'image/png');
+}
+
+function loadSampleImage() {
+  const sampleUrl = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=80';
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    state.image = img;
+    state.filename = 'sample-photo';
+    drawImageToCanvas();
+  };
+  img.src = sampleUrl;
+}
+
+function attachEvents() {
+  Object.keys(controls).forEach((key) => {
+    const input = controls[key];
+    if (input.type === 'checkbox') {
+      input.addEventListener('change', syncStateFromControls);
+    } else {
+      input.addEventListener('input', syncStateFromControls);
     }
+  });
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        alert("تعذر تجهيز الصورة للتحميل.");
-        return;
-      }
+  fileInput.addEventListener('change', (event) => {
+    const [file] = event.target.files;
+    applyImageToEditor(file);
+  });
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+  const uploadLabel = document.querySelector('.upload-label');
 
-      link.href = url;
-      link.download = `${state.filename}-edited.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      URL.revokeObjectURL(url);
-    }, "image/png");
-  }
-
-  function resetEditor() {
-    applyPreset("none");
-    setActiveFilter("none");
-  }
-
-  document.querySelectorAll(".filter-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const filterName = button.dataset.filter;
-      setActiveFilter(filterName);
-      applyPreset(filterName);
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    uploadLabel.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      uploadLabel.classList.add('dragover');
     });
   });
 
-  if (fileInput) {
-    fileInput.addEventListener("change", (event) => {
-      loadImage(event.target.files && event.target.files[0]);
+  ['dragleave', 'drop'].forEach((eventName) => {
+    uploadLabel.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      uploadLabel.classList.remove('dragover');
     });
-  }
+  });
 
-  if (brightnessInput) {
-    brightnessInput.addEventListener("input", () => {
-      state.brightness = Number(brightnessInput.value);
-      updateBrightnessLabel();
-      drawImage();
-    });
-  }
+  uploadLabel.addEventListener('drop', (event) => {
+    const file = event.dataTransfer.files[0];
+    applyImageToEditor(file);
+  });
 
-  if (downloadBtn) {
-    downloadBtn.addEventListener("click", downloadImage);
-  }
+  downloadBtn.addEventListener('click', downloadImage);
 
-  if (resetBtn) {
-    resetBtn.addEventListener("click", resetEditor);
-  }
+  resetBtn.addEventListener('click', () => {
+    setDefaults();
+    document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+    document.querySelector('.filter-btn[data-filter="none"]').classList.add('active');
+    if (state.image) drawImageToCanvas();
+  });
 
-  updateBrightnessLabel();
-})();
+  generateSampleBtn.addEventListener('click', loadSampleImage);
+}
+
+setDefaults();
+attachEvents();
+setupFilterButtons();
+
+if (heroPreview) {
+  heroPreview.addEventListener('error', () => {
+    heroPreview.src = 'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1000&q=80';
+  });
+}
