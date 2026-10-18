@@ -9,6 +9,7 @@
   const downloadBtn = $('downloadBtn');
   const resetBtn = $('resetBtn');
   const uploadLabel = document.querySelector('.upload-label');
+    const clearImageBtn = document.getElementById('clearImageBtn');
 
   if (!canvas || !ctx || !fileInput || !emptyState || !imageInfo) {
     console.error('بعض عناصر محرر الصور غير موجودة في HTML.');
