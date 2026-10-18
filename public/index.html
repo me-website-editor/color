@@ -269,18 +269,87 @@
               <button data-action="reset">إعادة ضبط</button>
             </div>
 
-            <div class="controls-group">
+             <div class="controls-group">
               <div class="control-row">
                 <label for="brightness">الإضاءة</label>
                 <span id="brightnessValue">100%</span>
               </div>
-              <input
-                id="brightness"
-                type="range"
-                min="0"
-                max="200"
-                value="100"
-              />
+              <input id="brightness" type="range" min="0" max="200" value="100" />
+            </div>
+
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="contrast">التباين</label>
+                <span id="contrastValue">100%</span>
+              </div>
+              <input id="contrast" type="range" min="0" max="200" value="100" />
+            </div>
+
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="saturation">التشبع</label>
+                <span id="saturationValue">100%</span>
+              </div>
+              <input id="saturation" type="range" min="0" max="200" value="100" />
+            </div>
+
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="blur">الضبابية</label>
+                <span id="blurValue">0px</span>
+              </div>
+              <input id="blur" type="range" min="0" max="10" value="0" />
+            </div>
+
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="sepia">اللون البني</label>
+                <span id="sepiaValue">0%</span>
+              </div>
+              <input id="sepia" type="range" min="0" max="100" value="0" />
+            </div>
+
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="grayscale">التدرج الرمادي</label>
+                <span id="grayscaleValue">0%</span>
+              </div>
+              <input id="grayscale" type="range" min="0" max="100" value="0" />
+            </div>
+
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="hue">تدوير الألوان</label>
+                <span id="hueValue">0°</span>
+              </div>
+              <input id="hue" type="range" min="0" max="360" value="0" />
+            </div>
+
+            <div class="controls-group split-controls">
+              <div>
+                <label for="rotation">الدوران</label>
+                <input id="rotation" type="range" min="-180" max="180" value="0" />
+              </div>
+              <div>
+                <label for="zoom">التكبير</label>
+                <input id="zoom" type="range" min="50" max="200" value="100" />
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <label class="switch">
+                <input id="flipX" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+              <span>عكس أفقي</span>
+            </div>
+
+            <div class="toggle-row">
+              <label class="switch">
+                <input id="flipY" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+              <span>عكس عمودي</span>
             </div>
 
             <div class="button-stack">
