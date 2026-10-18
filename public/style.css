@@ -1151,9 +1151,57 @@ canvas {
     padding: 28px 20px;
   }
 
+  /* نافذة تسجيل الدخول على الهاتف */
+  .modal {
+    padding: 20px;
+  }
+
   .modal-content {
-    padding: 18px;
-    border-radius: 20px;
+    width: 100%;
+    max-width: 440px;
+    max-height: calc(100dvh - 40px);
+    padding: 26px 22px;
+    border-radius: 24px;
+  }
+
+  .auth-header {
+    margin-bottom: 24px;
+  }
+
+  .brand-icon-auth {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 14px;
+    font-size: 1.8rem;
+  }
+
+  .auth-header h1 {
+    font-size: 1.9rem;
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  .form-group input {
+    min-height: 50px;
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+
+  .modal-content .primary-btn,
+  .modal-content .secondary-btn,
+  .modal-content .ghost-btn {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .auth-divider {
+    margin: 20px 0 16px;
+  }
+
+  .auth-footer {
+    font-size: 13px;
   }
 }
 
@@ -1185,116 +1233,5 @@ canvas {
   .toolbar-pill {
     padding: 7px 9px;
     font-size: 11px;
-  }
-}
-@media (max-width: 600px) {
-  .modal {
-    padding: 20px;
-  }
-
-  .modal-content {
-    width: 100%;
-    max-width: 440px;
-    max-height: calc(100dvh - 40px);
-    padding: 26px 22px;
-    border-radius: 24px;
-  }
-
-  .auth-header {
-    margin-bottom: 24px;
-  }
-
-  .brand-icon-auth {
-    width: 64px;
-    height: 64px;
-    font-size: 1.8rem;
-  }
-
-  .auth-header h1 {
-    font-size: 1.9rem;
-  }
-
-  .form-group {
-    margin-bottom: 20px;
-  }
-
-  .form-group input {
-    min-height: 50px;
-    padding: 14px 16px;
-    font-size: 16px;
-  }
-
-  .modal-content .primary-btn,
-  .modal-content .secondary-btn,
-  .modal-content .ghost-btn {
-    min-height: 48px;
-    font-size: 16px;
-  }
-@media (max-width: 600px) {
-  .modal {
-    padding: 20px;
-  }
-
-  .modal-content {
-    width: 100%;
-    max-width: 440px;
-    padding: 28px 22px;
-    border-radius: 24px;
-  }
-
-  .auth-header {
-    margin-bottom: 26px;
-  }
-
-  .brand-icon-auth {
-    width: 68px;
-    height: 68px;
-    margin-bottom: 16px;
-    border-radius: 20px;
-    font-size: 1.8rem;
-  }
-
-  .auth-header h1 {
-    margin-bottom: 10px;
-    font-size: 1.8rem;
-  }
-
-  .auth-header p {
-    font-size: 14px;
-  }
-
-  .form-group {
-    margin-bottom: 20px;
-  }
-
-  .form-group label {
-    margin-bottom: 9px;
-    font-size: 14px;
-  }
-
-  .form-group input {
-    min-height: 52px;
-    padding: 14px 16px;
-    border-radius: 14px;
-    font-size: 16px;
-  }
-
-  .modal-content .primary-btn,
-  .modal-content .secondary-btn,
-  .modal-content .ghost-btn {
-    min-height: 50px;
-    font-size: 15px;
-  }
-
-  .auth-divider {
-    margin: 20px 0 16px;
-  }
-
-  .auth-footer {
-    font-size: 13px;
-  }
-}
-  .auth-footer {
-    font-size: 13px;
   }
 }
