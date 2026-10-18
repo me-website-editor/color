@@ -11,6 +11,79 @@
 
   <link rel="stylesheet" href="style.css">
 
+  <style>
+    .editor-section {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+      gap: 24px;
+      align-items: start;
+      direction: ltr;
+    }
+
+    .editor-section .preview-panel,
+    .editor-section .controls-panel {
+      direction: rtl;
+      min-width: 0;
+    }
+
+    .editor-section .preview-panel {
+      grid-column: 1;
+      grid-row: 1;
+      min-height: 680px;
+    }
+
+    .editor-section .controls-panel {
+      grid-column: 2;
+      grid-row: 1;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .editor-section .canvas-stage {
+      min-height: 580px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .editor-section #editorCanvas {
+      display: block;
+      max-width: 100%;
+      max-height: 560px;
+      object-fit: contain;
+    }
+
+    .upload-label.dragover {
+      outline: 2px dashed #6c63ff;
+      background: rgba(108, 99, 255, 0.08);
+    }
+
+    @media (max-width: 900px) {
+      .editor-section {
+        grid-template-columns: 1fr;
+      }
+
+      .editor-section .preview-panel,
+      .editor-section .controls-panel {
+        grid-column: 1;
+        grid-row: auto;
+      }
+
+      .editor-section .preview-panel {
+        min-height: 420px;
+      }
+
+      .editor-section .canvas-stage {
+        min-height: 360px;
+      }
+
+      .editor-section .controls-panel {
+        max-height: none;
+      }
+    }
+  </style>
+
   <script defer src="auth.js"></script>
   <script defer src="filters.js"></script>
   <script defer src="script.js"></script>
@@ -113,7 +186,6 @@
 
           <div class="canvas-stage">
             <canvas id="editorCanvas" width="900" height="600"></canvas>
-
             <div id="emptyState" class="empty-state">
               <div class="empty-icon">🖼️</div>
               <h3>ارفع صورة لتعديلها</h3>
@@ -136,7 +208,6 @@
 
           <div class="filters-section">
             <h3>فلاتر جاهزة</h3>
-
             <div class="filters-grid">
               <button class="filter-btn active" data-filter="none">أصلي</button>
               <button class="filter-btn" data-filter="grayscale">أبيض وأسود</button>
@@ -235,7 +306,6 @@
               <label for="rotation">الدوران</label>
               <input id="rotation" type="range" min="-180" max="180" value="0">
             </div>
-
             <div>
               <label for="zoom">التكبير</label>
               <input id="zoom" type="range" min="50" max="200" value="100">
@@ -257,12 +327,11 @@
             </label>
             <span>عكس عمودي</span>
           </div>
-
-          <div class="upload-actions">
-            <button type="button" id="clearImageBtn" class="clear-image-btn">
-              مسح الصورة
-            </button>
-          </div>
+            <div class="upload-actions">
+    <button type="button" id="clearImageBtn" class="clear-image-btn">
+      مسح الصورة
+    </button>
+  </div>
 
           <div class="button-stack">
             <button id="downloadBtn" class="primary-btn full">تحميل الصورة</button>
