@@ -1237,3 +1237,106 @@ canvas {
     font-size: 11px;
   }
 }
+/* تنظيم أقسام لوحة الإعدادات */
+.controls-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.controls-panel .filters-section,
+.controls-panel .edit-section {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.controls-panel .filters-section h3,
+.controls-panel .edit-section h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.controls-panel .filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.controls-panel .filter-btn,
+.controls-panel .edit-tools button {
+  min-width: 0;
+  padding: 9px 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.controls-panel .edit-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.controls-panel .edit-tools button:last-child {
+  grid-column: 1 / -1;
+}
+
+.controls-panel .controls-group {
+  margin: 14px 0;
+}
+
+.controls-panel .control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.controls-panel input[type="range"] {
+  width: 100%;
+}
+
+.controls-panel .split-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.controls-panel .split-controls input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.controls-panel .toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.controls-panel .upload-actions {
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.controls-panel .clear-image-btn {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .controls-panel .filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-panel .filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .controls-panel .split-controls {
+    grid-template-columns: 1fr;
+  }
+}
