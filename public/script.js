@@ -1,26 +1,33 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const canvas = document.getElementById("editorCanvas");
-  const ctx = canvas?.getContext("2d");
-  const uploadInput = document.getElementById("imageUpload");
-  const emptyState = document.getElementById("emptyState");
-  const imageInfo = document.getElementById("imageInfo");
-  const clearButton = document.getElementById("clearImageBtn");
-  const sampleButton = document.getElementById("generateSample");
+(() => {
+  const $ = (id) => document.getElementById(id);
 
-  if (!canvas || !ctx) return;
+  const canvas = $('editorCanvas');
+  const ctx = canvas?.getContext('2d');
+  const fileInput = $('imageUpload');
+  const emptyState = $('emptyState');
+  const imageInfo = $('imageInfo');
+  const downloadBtn = $('downloadBtn');
+  const resetBtn = $('resetBtn');
+  const uploadLabel = document.querySelector('.upload-label');
+  const clearImageBtn = $('clearImageBtn');
+
+  if (!canvas || !ctx || !fileInput || !emptyState || !imageInfo) {
+    console.error('بعض عناصر محرر الصور غير موجودة في HTML.');
+    return;
+  }
 
   const controls = {
-    brightness: document.getElementById("brightness"),
-    contrast: document.getElementById("contrast"),
-    saturation: document.getElementById("saturation"),
-    blur: document.getElementById("blur"),
-    sepia: document.getElementById("sepia"),
-    grayscale: document.getElementById("grayscale"),
-    hue: document.getElementById("hue"),
-    rotation: document.getElementById("rotation"),
-    zoom: document.getElementById("zoom"),
-    flipX: document.getElementById("flipX"),
-    flipY: document.getElementById("flipY")
+    brightness: $('brightness'),
+    contrast: $('contrast'),
+    saturation: $('saturation'),
+    blur: $('blur'),
+    sepia: $('sepia'),
+    grayscale: $('grayscale'),
+    hue: $('hue'),
+    rotation: $('rotation'),
+    zoom: $('zoom'),
+    flipX: $('flipX'),
+    flipY: $('flipY')
   };
 
   const defaults = {
@@ -37,256 +44,262 @@ document.addEventListener("DOMContentLoaded", () => {
     flipY: false
   };
 
-  const filterPresets = {
-    none: {},
-    grayscale: { grayscale: 100 },
-    sepia: { sepia: 100 },
-    vintage: { sepia: 45, contrast: 90, brightness: 95, saturation: 80 },
-    noir: { grayscale: 100, contrast: 140, brightness: 90 },
-    warm: { sepia: 20, saturation: 125 },
-    cool: { hue: 15, saturation: 90 },
-    dramatic: { contrast: 145, saturation: 110 },
-    faded: { contrast: 80, brightness: 110, saturation: 75 },
-    vivid: { saturation: 160, contrast: 110 },
-    sunset: { sepia: 30, hue: 345, saturation: 140 },
-    ocean: { hue: 25, saturation: 115, contrast: 105 },
-    forest: { hue: 345, saturation: 120, contrast: 105 },
-    retro: { sepia: 35, contrast: 95, saturation: 85 },
-    cinema: { contrast: 125, saturation: 85, brightness: 95 },
-    polaroid: { sepia: 20, contrast: 90, brightness: 110, saturation: 85 },
-    soft: { contrast: 85, brightness: 108, saturation: 90 },
-    bright: { brightness: 120, contrast: 105 },
-    matte: { contrast: 85, brightness: 105, saturation: 80 },
-    pink: { hue: 340, saturation: 125 }
+  const state = {
+    ...defaults,
+    image: null,
+    filename: 'edited-image'
   };
 
-  let image = null;
-  let imageUrl = null;
-  let activePreset = "none";
-
-  function getValue(name) {
-    const control = controls[name];
-    return control ? Number(control.value) : defaults[name];
-  }
-
-  function getFilterValues() {
-    const preset = filterPresets[activePreset] || {};
-    return {
-      brightness: preset.brightness ?? getValue("brightness"),
-      contrast: preset.contrast ?? getValue("contrast"),
-      saturation: preset.saturation ?? getValue("saturation"),
-      blur: getValue("blur"),
-      sepia: preset.sepia ?? getValue("sepia"),
-      grayscale: preset.grayscale ?? getValue("grayscale"),
-      hue: preset.hue ?? getValue("hue")
-    };
-  }
-
-  function updateValueLabels() {
+  function updateLabels() {
     const labels = {
-      brightness: `${getValue("brightness")}%`,
-      contrast: `${getValue("contrast")}%`,
-      saturation: `${getValue("saturation")}%`,
-      blur: `${getValue("blur")}px`,
-      sepia: `${getValue("sepia")}%`,
-      grayscale: `${getValue("grayscale")}%`,
-      hue: `${getValue("hue")}°`
+      brightness: '%',
+      contrast: '%',
+      saturation: '%',
+      blur: 'px',
+      sepia: '%',
+      grayscale: '%',
+      hue: '°'
     };
 
-    Object.entries(labels).forEach(([name, value]) => {
-      const output = document.getElementById(`${name}Value`);
-      if (output) output.textContent = value;
-    });
+    for (const [key, suffix] of Object.entries(labels)) {
+      const label = $(`${key}Value`);
+      if (label) label.textContent = `${state[key]}${suffix}`;
+    }
   }
 
-  function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  function drawImageToCanvas() {
+    if (!state.image) return;
 
-    if (!image) {
-      if (emptyState) emptyState.hidden = false;
-      if (imageInfo) imageInfo.textContent = "لا توجد صورة";
-      return;
-    }
+    const image = state.image;
+    const scale = Math.min(900 / image.width, 600 / image.height, 1);
+    const width = Math.max(1, Math.round(image.width * scale));
+    const height = Math.max(1, Math.round(image.height * scale));
+    const angle = ((state.rotation % 360) + 360) % 360;
+    const quarterTurn = angle === 90 || angle === 270;
 
-    if (emptyState) emptyState.hidden = true;
+    canvas.width = quarterTurn ? height : width;
+    canvas.height = quarterTurn ? width : height;
 
-    const values = getFilterValues();
-    const rotation = (getValue("rotation") * Math.PI) / 180;
-    const zoom = getValue("zoom") / 100;
+    const zoom = state.zoom / 100;
 
     ctx.save();
-    ctx.filter = [
-      `brightness(${values.brightness}%)`,
-      `contrast(${values.contrast}%)`,
-      `saturate(${values.saturation}%)`,
-      `blur(${values.blur}px)`,
-      `sepia(${values.sepia}%)`,
-      `grayscale(${values.grayscale}%)`,
-      `hue-rotate(${values.hue}deg)`
-    ].join(" ");
-
     ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate(rotation);
-    ctx.scale(
-      zoom * (controls.flipX?.checked ? -1 : 1),
-      zoom * (controls.flipY?.checked ? -1 : 1)
-    );
+    ctx.rotate(state.rotation * Math.PI / 180);
+    ctx.scale(state.flipX ? -1 : 1, state.flipY ? -1 : 1);
 
-    const scale = Math.min(
-      canvas.width / image.width,
-      canvas.height / image.height
-    );
-    const drawWidth = image.width * scale;
-    const drawHeight = image.height * scale;
+    ctx.filter =
+      `brightness(${state.brightness}%) ` +
+      `contrast(${state.contrast}%) ` +
+      `saturate(${state.saturation}%) ` +
+      `blur(${state.blur}px) ` +
+      `sepia(${state.sepia}%) ` +
+      `grayscale(${state.grayscale}%) ` +
+      `hue-rotate(${state.hue}deg)`;
 
     ctx.drawImage(
       image,
-      -drawWidth / 2,
-      -drawHeight / 2,
-      drawWidth,
-      drawHeight
+      -(width * zoom) / 2,
+      -(height * zoom) / 2,
+      width * zoom,
+      height * zoom
     );
 
     ctx.restore();
+    emptyState.classList.add('hidden');
+    imageInfo.textContent = `${canvas.width} × ${canvas.height}`;
+  }
 
-    if (imageInfo) {
-      imageInfo.textContent = `${image.naturalWidth} × ${image.naturalHeight}`;
+  function setControl(key, value) {
+    state[key] = value;
+    const control = controls[key];
+    if (!control) return;
+
+    if (control.type === 'checkbox') {
+      control.checked = Boolean(value);
+    } else {
+      control.value = value;
     }
   }
 
-  function loadImage(src) {
-    const newImage = new Image();
-
-    newImage.onload = () => {
-      image = newImage;
-      activePreset = "none";
-      resetControls(false);
-      updateValueLabels();
-      updateActiveFilterButton();
-      render();
-    };
-
-    newImage.onerror = () => {
-      alert("تعذّر تحميل الصورة. جرّب اختيار صورة أخرى.");
-    };
-
-    newImage.src = src;
-  }
-
-  function resetControls(shouldRender = true) {
-    Object.entries(defaults).forEach(([name, value]) => {
-      const control = controls[name];
-      if (!control) return;
-
-      if (control.type === "checkbox") {
-        control.checked = value;
-      } else {
-        control.value = value;
-      }
-    });
-
-    activePreset = "none";
-    updateValueLabels();
-    updateActiveFilterButton();
-
-    if (shouldRender) render();
-  }
-
-  function updateActiveFilterButton() {
-    document.querySelectorAll(".filter-btn").forEach((button) => {
-      button.classList.toggle(
-        "active",
-        button.dataset.filter === activePreset
-      );
-    });
-  }
-
-  function revokeCurrentUrl() {
-    if (imageUrl && imageUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(imageUrl);
+  function setDefaults() {
+    for (const [key, value] of Object.entries(defaults)) {
+      setControl(key, value);
     }
-    imageUrl = null;
+
+    updateLabels();
+
+    document.querySelectorAll('.filter-btn').forEach((button) => {
+      button.classList.toggle('active', button.dataset.filter === 'none');
+    });
+
+    drawImageToCanvas();
   }
 
-  uploadInput?.addEventListener("change", (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  function applyFilter(name) {
+    const preset = window.FILTER_PRESETS?.[name];
 
-    if (!file.type.startsWith("image/")) {
-      alert("يرجى اختيار ملف صورة.");
-      uploadInput.value = "";
+    if (!preset) {
+      console.warn(`الفِلتر "${name}" غير موجود في filters.js`);
       return;
     }
 
-    revokeCurrentUrl();
-    imageUrl = URL.createObjectURL(file);
-    loadImage(imageUrl);
-  });
+    for (const [key, value] of Object.entries(preset)) {
+      setControl(key, value);
+    }
 
-  document.querySelectorAll(".filter-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      activePreset = button.dataset.filter || "none";
-      updateActiveFilterButton();
-      render();
-    });
-  });
+    updateLabels();
+    drawImageToCanvas();
+  }
 
-  Object.entries(controls).forEach(([name, control]) => {
-    control?.addEventListener("input", () => {
-      if (name !== "rotation" && name !== "zoom" && name !== "flipX" && name !== "flipY") {
-        activePreset = "none";
-        updateActiveFilterButton();
-      }
+  function readControls() {
+    for (const [key, control] of Object.entries(controls)) {
+      if (!control) continue;
 
-      updateValueLabels();
-      render();
-    });
+      state[key] = control.type === 'checkbox'
+        ? control.checked
+        : Number(control.value);
+    }
 
-    control?.addEventListener("change", () => {
-      updateValueLabels();
-      render();
-    });
-  });
+    updateLabels();
+    drawImageToCanvas();
+  }
 
-  document.querySelectorAll(".edit-tools button").forEach((button) => {
-    button.addEventListener("click", () => {
-      const action = button.dataset.action;
+  function loadImage(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      alert('من فضلك اختَر ملف صورة صالحًا.');
+      return;
+    }
 
-      if (action === "rotateLeft") {
-        controls.rotation.value = Number(controls.rotation.value) - 90;
-      } else if (action === "rotateRight") {
-        controls.rotation.value = Number(controls.rotation.value) + 90;
-      } else if (action === "flipHorizontal") {
-        controls.flipX.checked = !controls.flipX.checked;
-      } else if (action === "flipVertical") {
-        controls.flipY.checked = !controls.flipY.checked;
-      } else if (action === "reset") {
-        resetControls();
+    const reader = new FileReader();
+
+    reader.onerror = () => alert('تعذّرت قراءة الصورة.');
+
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onerror = () => alert('تعذّر تحميل الصورة.');
+
+      image.onload = () => {
+        state.image = image;
+        state.filename = file.name.replace(/\.[^/.]+$/, '') || 'edited-image';
+        drawImageToCanvas();
+      };
+
+      image.src = reader.result;
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function downloadImage() {
+    if (!state.image) {
+      alert('ارفع صورة أولًا.');
+      return;
+    }
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        alert('تعذّر تجهيز الصورة للتنزيل.');
         return;
       }
 
-      updateValueLabels();
-      render();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${state.filename}-edited.png`;
+      link.click();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, 'image/png');
+  }
+
+  function clearImage() {
+    state.image = null;
+    state.filename = 'edited-image';
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = 1;
+    canvas.height = 1;
+
+    emptyState.classList.remove('hidden');
+    imageInfo.textContent = '';
+    fileInput.value = '';
+
+    setDefaults();
+  }
+
+  Object.entries(controls).forEach(([key, control]) => {
+    if (!control) return;
+
+    control.addEventListener(
+      control.type === 'checkbox' ? 'change' : 'input',
+      readControls
+    );
+  });
+
+  fileInput.addEventListener('change', (event) => {
+    loadImage(event.target.files?.[0]);
+  });
+
+  if (uploadLabel) {
+    uploadLabel.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      uploadLabel.classList.add('dragover');
+    });
+
+    uploadLabel.addEventListener('dragleave', () => {
+      uploadLabel.classList.remove('dragover');
+    });
+
+    uploadLabel.addEventListener('drop', (event) => {
+      event.preventDefault();
+      uploadLabel.classList.remove('dragover');
+      loadImage(event.dataTransfer.files?.[0]);
+    });
+  }
+
+  document.querySelectorAll('.filter-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach((item) => {
+        item.classList.remove('active');
+      });
+
+      button.classList.add('active');
+      applyFilter(button.dataset.filter);
     });
   });
 
-  clearButton?.addEventListener("click", () => {
-    revokeCurrentUrl();
-    image = null;
-    if (uploadInput) uploadInput.value = "";
-    resetControls(false);
-    render();
+  document.querySelectorAll('.edit-tools [data-action]').forEach((button) => {
+    button.addEventListener('click', () => {
+      switch (button.dataset.action) {
+        case 'rotateLeft':
+          state.rotation = Math.max(-180, state.rotation - 90);
+          break;
+        case 'rotateRight':
+          state.rotation = Math.min(180, state.rotation + 90);
+          break;
+        case 'flipHorizontal':
+          state.flipX = !state.flipX;
+          break;
+        case 'flipVertical':
+          state.flipY = !state.flipY;
+          break;
+        case 'reset':
+          setDefaults();
+          return;
+      }
+
+      if (controls.rotation) controls.rotation.value = state.rotation;
+      if (controls.flipX) controls.flipX.checked = state.flipX;
+      if (controls.flipY) controls.flipY.checked = state.flipY;
+
+      drawImageToCanvas();
+    });
   });
 
-  sampleButton?.addEventListener("click", () => {
-    const sampleImage =
-      document.getElementById("heroPreview")?.src ||
-      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=90";
+  downloadBtn?.addEventListener('click', downloadImage);
+  resetBtn?.addEventListener('click', setDefaults);
+  clearImageBtn?.addEventListener('click', clearImage);
 
-    revokeCurrentUrl();
-    loadImage(sampleImage);
-  });
-
-  updateValueLabels();
-  render();
-});
+  updateLabels();
+})();
