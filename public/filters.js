@@ -1,88 +1,27 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const filterButtons = document.querySelectorAll(".filter-btn");
-  const canvas = document.getElementById("editorCanvas");
-
-  if (!canvas || filterButtons.length === 0) return;
-
-  const ctx = canvas.getContext("2d");
-
-  const filters = {
-    none: "",
-    grayscale: "grayscale(100%)",
-    sepia: "sepia(100%)",
-    vintage: "sepia(45%) contrast(90%) brightness(95%) saturate(80%)",
-    noir: "grayscale(100%) contrast(140%) brightness(90%)",
-    warm: "sepia(20%) saturate(125%)",
-    cool: "hue-rotate(15deg) saturate(90%)",
-    dramatic: "contrast(145%) saturate(110%)",
-    faded: "contrast(80%) brightness(110%) saturate(75%)",
-    vivid: "saturate(160%) contrast(110%)",
-    sunset: "sepia(30%) hue-rotate(-15deg) saturate(140%)",
-    ocean: "hue-rotate(25deg) saturate(115%) contrast(105%)",
-    forest: "hue-rotate(-15deg) saturate(120%) contrast(105%)",
-    retro: "sepia(35%) contrast(95%) saturate(85%)",
-    cinema: "contrast(125%) saturate(85%) brightness(95%)",
-    polaroid: "sepia(20%) contrast(90%) brightness(110%) saturate(85%)",
-    soft: "contrast(85%) brightness(108%) saturate(90%)",
-    bright: "brightness(120%) contrast(105%)",
-    matte: "contrast(85%) brightness(105%) saturate(80%)",
-    pink: "hue-rotate(-20deg) saturate(125%)"
-  };
-
-  let image = null;
-  let selectedFilter = "none";
-
-  function renderCanvas() {
-    if (!image) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-
-    ctx.clearRect(0, 0, width, height);
-    ctx.save();
-    ctx.filter = filters[selectedFilter] || "none";
-
-    const scale = Math.min(width / image.width, height / image.height);
-    const drawWidth = image.width * scale;
-    const drawHeight = image.height * scale;
-    const x = (width - drawWidth) / 2;
-    const y = (height - drawHeight) / 2;
-
-    ctx.drawImage(image, x, y, drawWidth, drawHeight);
-    ctx.restore();
-  }
-
-  function loadCanvasImage() {
-    try {
-      image = new Image();
-      image.onload = renderCanvas;
-      image.src = canvas.toDataURL("image/png");
-    } catch (error) {
-      image = null;
-    }
-  }
-
-  filterButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      selectedFilter = button.dataset.filter || "none";
-
-      filterButtons.forEach((item) => item.classList.remove("active"));
-      button.classList.add("active");
-
-      renderCanvas();
-    });
-  });
-
-  loadCanvasImage();
-
-  const observer = new MutationObserver(() => {
-    if (!image && canvas.width > 0 && canvas.height > 0) {
-      loadCanvasImage();
-    }
-  });
-
-  observer.observe(canvas, {
-    attributes: true,
-    attributeFilter: ["width", "height"]
-  });
-});
+window.FILTER_PRESETS = {
+  none:       { brightness: 100, contrast: 100, saturation: 100, blur: 0,   sepia: 0,   grayscale: 0,   hue: 0 },
+  grayscale:  { brightness: 100, contrast: 110, saturation: 0,   blur: 0,   sepia: 0,   grayscale: 100, hue: 0 },
+  sepia:      { brightness: 100, contrast: 100, saturation: 80,  blur: 0,   sepia: 100, grayscale: 0,   hue: 0 },
+  vivid:      { brightness: 110, contrast: 130, saturation: 160, blur: 0,   sepia: 0,   grayscale: 0,   hue: 0 },
+  soft:       { brightness: 108, contrast: 90,  saturation: 90,  blur: 0.4, sepia: 5,   grayscale: 0,   hue: 0 },
+  bright:     { brightness: 125, contrast: 105, saturation: 110, blur: 0,   sepia: 0,   grayscale: 0,   hue: 0 },
+  matte:      { brightness: 110, contrast: 80,  saturation: 85,  blur: 0,   sepia: 5,   grayscale: 0,   hue: 0 },
+  pink:       { brightness: 105, contrast: 100, saturation: 115, blur: 0,   sepia: 10,  grayscale: 0,   hue: 330 },
+  warm:       { brightness: 105, contrast: 105, saturation: 120, blur: 0,   sepia: 20,  grayscale: 0,   hue: 15 },
+  cool:       { brightness: 100, contrast: 105, saturation: 90,  blur: 0,   sepia: 0,   grayscale: 0,   hue: 200 },
+  vintage:    { brightness: 110, contrast: 85,  saturation: 70,  blur: 0,   sepia: 40,  grayscale: 0,   hue: 0 },
+  dramatic:   { brightness: 90,  contrast: 160, saturation: 110, blur: 0,   sepia: 0,   grayscale: 0,   hue: 0 },
+  faded:      { brightness: 120, contrast: 80,  saturation: 60,  blur: 0,   sepia: 15,  grayscale: 0,   hue: 0 },
+  golden:     { brightness: 110, contrast: 105, saturation: 120, blur: 0,   sepia: 35,  grayscale: 0,   hue: 10 },
+  rose:       { brightness: 105, contrast: 100, saturation: 110, blur: 0,   sepia: 15,  grayscale: 0,   hue: 330 },
+  moody:      { brightness: 80,  contrast: 135, saturation: 85,  blur: 0,   sepia: 10,  grayscale: 0,   hue: 0 },
+  crisp:      { brightness: 105, contrast: 135, saturation: 115, blur: 0,   sepia: 0,   grayscale: 0,   hue: 0 },
+  pastel:     { brightness: 115, contrast: 85,  saturation: 75,  blur: 0,   sepia: 5,   grayscale: 0,   hue: 0 },
+  noir:       { brightness: 90,  contrast: 150, saturation: 0,   blur: 0,   sepia: 0,   grayscale: 100, hue: 0 },
+  arctic:     { brightness: 105, contrast: 110, saturation: 85,  blur: 0,   sepia: 0,   grayscale: 0,   hue: 210 },
+  sunset:     { brightness: 105, contrast: 110, saturation: 130, blur: 0,   sepia: 25,  grayscale: 0,   hue: 340 },
+  fadedFilm:  { brightness: 115, contrast: 82,  saturation: 65,  blur: 0,   sepia: 22,  grayscale: 0,   hue: 0 },
+  punch:      { brightness: 100, contrast: 145, saturation: 135, blur: 0,   sepia: 0,   grayscale: 0,   hue: 0 },
+  dreamy:     { brightness: 115, contrast: 85,  saturation: 105, blur: 1.2, sepia: 8,   grayscale: 0,   hue: 5 },
+  natural:    { brightness: 102, contrast: 102, saturation: 105, blur: 0,   sepia: 0,   grayscale: 0,   hue: 0 }
+};
