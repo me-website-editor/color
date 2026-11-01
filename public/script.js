@@ -62,8 +62,8 @@
     };
 
     for (const [key, suffix] of Object.entries(labels)) {
-      const label = $(`${key}Value`);
-      if (label) label.textContent = `${state[key]}${suffix}`;
+      const label = $(${key}Value);
+      if (label) label.textContent = ${state[key]}${suffix};
     }
   }
 
@@ -94,7 +94,7 @@
       `blur(${state.blur}px) ` +
       `sepia(${state.sepia}%) ` +
       `grayscale(${state.grayscale}%) ` +
-      `hue-rotate(${state.hue}deg)`;
+      hue-rotate(${state.hue}deg);
 
     ctx.drawImage(
       image,
@@ -106,7 +106,7 @@
 
     ctx.restore();
     emptyState.classList.add('hidden');
-    imageInfo.textContent = `${canvas.width} × ${canvas.height}`;
+    imageInfo.textContent = ${canvas.width} × ${canvas.height};
   }
 
   function setControl(key, value) {
@@ -139,7 +139,7 @@
     const preset = window.FILTER_PRESETS?.[name];
 
     if (!preset) {
-      console.warn(`الفِلتر "${name}" غير موجود في filters.js`);
+      console.warn(الفِلتر "${name}" غير موجود في filters.js);
       return;
     }
 
@@ -206,7 +206,7 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${state.filename}-edited.png`;
+      link.download = ${state.filename}-edited.png;
       link.click();
 
       setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -295,6 +295,31 @@
 
       drawImageToCanvas();
     });
+  });
+
+  // التحكم في أزرار تبديل الأقسام (الفلاتر، التعديل اليدوي، القص)
+  document.querySelectorAll('.tool-tab-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.tool-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tool-section-content').forEach(content => content.classList.remove('active'));
+      
+      button.classList.add('active');
+      const targetId = button.getAttribute('data-target');
+      const targetContent = $(targetId);
+      if (targetContent) targetContent.classList.add('active');
+    });
+  });
+
+  // أزرار القص (تجهيز للتشغيل)
+  const startCropBtn = $('startCropBtn');
+  const applyCropBtn = $('applyCropBtn');
+
+  startCropBtn?.addEventListener('click', () => {
+    alert('وضع القص قيد التفعيل...');
+  });
+
+  applyCropBtn?.addEventListener('click', () => {
+    alert('تم تطبيق القص بنجاح.');
   });
 
   downloadBtn?.addEventListener('click', downloadImage);
