@@ -16,6 +16,7 @@
     return;
   }
 
+  // هذه العناصر موجودة في HTML المرسل.
   const controls = {
     brightness: $('brightness'),
     contrast: $('contrast'),
@@ -23,11 +24,7 @@
     blur: $('blur'),
     sepia: $('sepia'),
     grayscale: $('grayscale'),
-    hue: $('hue'),
-    rotation: $('rotation'),
-    zoom: $('zoom'),
-    flipX: $('flipX'),
-    flipY: $('flipY')
+    hue: $('hue')
   };
 
   const defaults = {
@@ -39,7 +36,6 @@
     grayscale: 0,
     hue: 0,
     rotation: 0,
-    zoom: 100,
     flipX: false,
     flipY: false
   };
@@ -51,7 +47,7 @@
   };
 
   function updateLabels() {
-    const labels = {
+    const suffixes = {
       brightness: '%',
       contrast: '%',
       saturation: '%',
@@ -61,9 +57,9 @@
       hue: '°'
     };
 
-    for (const [key, suffix] of Object.entries(labels)) {
-      const label = $(${key}Value);
-      if (label) label.textContent = ${state[key] ?? 0}${suffix};
+    for (const [key, suffix] of Object.entries(suffixes)) {
+      const label = $(`${key}Value`);
+      if (label) label.textContent = `${state[key]}${suffix}`;
     }
   }
 
@@ -74,57 +70,40 @@
     const scale = Math.min(900 / image.width, 600 / image.height, 1);
     const width = Math.max(1, Math.round(image.width * scale));
     const height = Math.max(1, Math.round(image.height * scale));
+
     const angle = ((state.rotation % 360) + 360) % 360;
     const quarterTurn = angle === 90 || angle === 270;
 
     canvas.width = quarterTurn ? height : width;
     canvas.height = quarterTurn ? width : height;
 
-    const zoom = state.zoom / 100;
-
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate(state.rotation * Math.PI / 180);
+    ctx.rotate((state.rotation * Math.PI) / 180);
     ctx.scale(state.flipX ? -1 : 1, state.flipY ? -1 : 1);
 
-    // تم تصحيح الفلاتر وربطها بشكل سليم نهائياً هنا:
-    ctx.filter =
-      `brightness(${state.brightness}%) ` +
-      `contrast(${state.contrast}%) ` +
-      `saturate(${state.saturation}%) ` +
-      `blur(${state.blur}px) ` +
-      `sepia(${state.sepia}%) ` +
-      `grayscale(${state.grayscale}%) ` +
-      hue-rotate(${state.hue}deg);
+    ctx.filter = [
+      `brightness(${state.brightness}%)`,
+      `contrast(${state.contrast}%)`,
+      `saturate(${state.saturation}%)`,
+      `blur(${state.blur}px)`,
+      `sepia(${state.sepia}%)`,
+      `grayscale(${state.grayscale}%)`,
+      `hue-rotate(${state.hue}deg)`
+    ].join(' ');
 
-    ctx.drawImage(
-      image,
-      -(width * zoom) / 2,
-      -(height * zoom) / 2,
-      width * zoom,
-      height * zoom
-    );
-
+    ctx.drawImage(image, -width / 2, -height / 2, width, height);
     ctx.restore();
+
     emptyState.classList.add('hidden');
-    imageInfo.textContent = ${canvas.width} × ${canvas.height};
-  }
-
-  function setControl(key, value) {
-    state[key] = value;
-    const control = controls[key];
-    if (!control) return;
-
-    if (control.type === 'checkbox') {
-      control.checked = Boolean(value);
-    } else {
-      control.value = value;
-    }
+    imageInfo.textContent = `${canvas.width} × ${canvas.height}`;
   }
 
   function setDefaults() {
-    for (const [key, value] of Object.entries(defaults)) {
-      setControl(key, value);
+    Object.assign(state, defaults);
+
+    for (const [key, control] of Object.entries(controls)) {
+      if (control) control.value = defaults[key];
     }
 
     updateLabels();
@@ -133,32 +112,26 @@
       button.classList.toggle('active', button.dataset.filter === 'none');
     });
 
-    drawImageToCanvas();
+    if (state.image) {
+      drawImageToCanvas();
+    }
   }
 
   function applyFilter(name) {
+    // يعتمد على FILTER_PRESETS المعرّف في filters.js إن كان موجودًا.
     const preset = window.FILTER_PRESETS?.[name];
 
     if (!preset) {
-      console.warn(الفِلتر "${name}" غير موجود في filters.js);
+      // الفلتر الأصلي يعيد التعديلات إلى القيم الافتراضية.
+      if (name === 'none') setDefaults();
       return;
     }
 
     for (const [key, value] of Object.entries(preset)) {
-      setControl(key, value);
-    }
-
-    updateLabels();
-    drawImageToCanvas();
-  }
-
-  function readControls() {
-    for (const [key, control] of Object.entries(controls)) {
-      if (!control) continue;
-
-      state[key] = control.type === 'checkbox'
-        ? control.checked
-        : Number(control.value);
+      if (key in defaults && key !== 'rotation' && key !== 'flipX' && key !== 'flipY') {
+        state[key] = value;
+        if (controls[key]) controls[key].value = value;
+      }
     }
 
     updateLabels();
@@ -166,23 +139,30 @@
   }
 
   function loadImage(file) {
-    if (!file || !file.type.startsWith('image/')) {
-      alert('من فضلك اختَر ملف صورة صالحًا.');
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('من فضلك اختر ملف صورة صالحًا.');
       return;
     }
 
     const reader = new FileReader();
 
-    reader.onerror = () => alert('تعذّرت قراءة الصورة.');
+    reader.onerror = () => {
+      alert('تعذّرت قراءة الصورة.');
+    };
 
     reader.onload = () => {
       const image = new Image();
 
-      image.onerror = () => alert('تعذّر تحميل الصورة.');
+      image.onerror = () => {
+        alert('تعذّر تحميل الصورة.');
+      };
 
       image.onload = () => {
         state.image = image;
         state.filename = file.name.replace(/\.[^/.]+$/, '') || 'edited-image';
+        setDefaults();
         drawImageToCanvas();
       };
 
@@ -206,8 +186,9 @@
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
+
       link.href = url;
-      link.download = ${state.filename}-edited.png;
+      link.download = `${state.filename}-edited.png`;
       link.click();
 
       setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -219,29 +200,32 @@
     state.filename = 'edited-image';
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 900;
+    canvas.height = 600;
 
     emptyState.classList.remove('hidden');
-    imageInfo.textContent = '';
+    imageInfo.textContent = 'لا توجد صورة';
     fileInput.value = '';
 
     setDefaults();
   }
 
+  // تحديث الصورة عند تغيير أدوات التعديل اليدوي.
   Object.entries(controls).forEach(([key, control]) => {
     if (!control) return;
 
-    control.addEventListener(
-      control.type === 'checkbox' ? 'change' : 'input',
-      readControls
-    );
+    control.addEventListener('input', () => {
+      state[key] = Number(control.value);
+      updateLabels();
+      drawImageToCanvas();
+    });
   });
 
   fileInput.addEventListener('change', (event) => {
     loadImage(event.target.files?.[0]);
   });
 
+  // دعم السحب والإفلات.
   if (uploadLabel) {
     uploadLabel.addEventListener('dragover', (event) => {
       event.preventDefault();
@@ -259,8 +243,8 @@
     });
   }
 
+  // أزرار الفلاتر.
   document.querySelectorAll('.filter-btn').forEach((button) => {
-    button.button?.addEventListener?.('click', () => {}); // حماية إضافية
     button.addEventListener('click', () => {
       document.querySelectorAll('.filter-btn').forEach((item) => {
         item.classList.remove('active');
@@ -271,14 +255,15 @@
     });
   });
 
+  // التدوير والقلب وإعادة الضبط.
   document.querySelectorAll('.edit-tools [data-action]').forEach((button) => {
     button.addEventListener('click', () => {
       switch (button.dataset.action) {
         case 'rotateLeft':
-          state.rotation = Math.max(-180, state.rotation - 90);
+          state.rotation -= 90;
           break;
         case 'rotateRight':
-          state.rotation = Math.min(180, state.rotation + 90);
+          state.rotation += 90;
           break;
         case 'flipHorizontal':
           state.flipX = !state.flipX;
@@ -291,37 +276,34 @@
           return;
       }
 
-      if (controls.rotation) controls.rotation.value = state.rotation;
-      if (controls.flipX) controls.flipX.checked = state.flipX;
-      if (controls.flipY) controls.flipY.checked = state.flipY;
-
       drawImageToCanvas();
     });
   });
 
-  // التحكم في أزرار تبديل الأقسام (الفلاتر، التعديل اليدوي، القص)
-  document.querySelectorAll('.tool-tab-btn').forEach(button => {
+  // التبويبات: موجودة أيضًا في HTML؛ هذا المعالج يضمن عملها هنا.
+  document.querySelectorAll('.tool-tab-btn').forEach((button) => {
     button.addEventListener('click', () => {
-      document.querySelectorAll('.tool-tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tool-section-content').forEach(content => content.classList.remove('active'));
-      
+      document.querySelectorAll('.tool-tab-btn').forEach((item) => {
+        item.classList.remove('active');
+      });
+
+      document.querySelectorAll('.tool-section-content').forEach((section) => {
+        section.classList.remove('active');
+      });
+
       button.classList.add('active');
-      const targetId = button.getAttribute('data-target');
-      const targetContent = $(targetId);
-      if (targetContent) targetContent.classList.add('active');
+
+      const target = $(button.dataset.target);
+      target?.classList.add('active');
     });
   });
 
-  // أزرار القص
-  const startCropBtn = $('startCropBtn');
-  const applyCropBtn = $('applyCropBtn');
-
-  startCropBtn?.addEventListener('click', () => {
-    alert('وضع القص قيد التفعيل...');
+  $('startCropBtn')?.addEventListener('click', () => {
+    alert('أداة القص غير مفعّلة بعد.');
   });
 
-  applyCropBtn?.addEventListener('click', () => {
-    alert('تم تطبيق القص بنجاح.');
+  $('applyCropBtn')?.addEventListener('click', () => {
+    alert('أداة القص غير مفعّلة بعد.');
   });
 
   downloadBtn?.addEventListener('click', downloadImage);
