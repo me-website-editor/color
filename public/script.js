@@ -94,7 +94,7 @@
       `blur(${state.blur}px) ` +
       `sepia(${state.sepia}%) ` +
       `grayscale(${state.grayscale}%) ` +
-      hue-rotate(${state.hue}deg);
+      hue-rotate(${state.hue}deg);  +
 
     ctx.drawImage(
       image,
