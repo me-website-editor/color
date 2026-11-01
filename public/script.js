@@ -62,8 +62,8 @@
     };
 
     for (const [key, suffix] of Object.entries(labels)) {
-      const label = $(${key}Value);
-      if (label) label.textContent = ${state[key] ?? 0}${suffix};
+      const label = $(`${key}Value`);
+      if (label) label.textContent = `${state[key] ?? 0}${suffix}`;
     }
   }
 
