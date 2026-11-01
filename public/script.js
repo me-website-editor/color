@@ -361,4 +361,154 @@
       drawImageToCanvas();
     };
 
-    croppedImage.src = cropped
+    croppedImage.src = croppedCanvas.toDataURL('image/png');
+  }
+
+  Object.entries(controls).forEach(([key, control]) => {
+    if (!control) return;
+
+    control.addEventListener('input', () => {
+      state[key] = Number(control.value);
+      updateLabels();
+      drawImageToCanvas();
+    });
+  });
+
+  fileInput.addEventListener('change', (event) => {
+    loadImage(event.target.files?.[0]);
+  });
+
+  if (uploadLabel) {
+    uploadLabel.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      uploadLabel.classList.add('dragover');
+    });
+
+    uploadLabel.addEventListener('dragleave', () => {
+      uploadLabel.classList.remove('dragover');
+    });
+
+    uploadLabel.addEventListener('drop', (event) => {
+      event.preventDefault();
+      uploadLabel.classList.remove('dragover');
+      loadImage(event.dataTransfer.files?.[0]);
+    });
+  }
+
+  document.querySelectorAll('.filter-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach((item) => {
+        item.classList.remove('active');
+      });
+
+      button.classList.add('active');
+      applyFilter(button.dataset.filter);
+    });
+  });
+
+  document.querySelectorAll('.edit-tools [data-action]').forEach((button) => {
+    button.addEventListener('click', () => {
+      switch (button.dataset.action) {
+        case 'rotateLeft':
+          state.rotation -= 90;
+          break;
+        case 'rotateRight':
+          state.rotation += 90;
+          break;
+        case 'flipHorizontal':
+          state.flipX = !state.flipX;
+          break;
+        case 'flipVertical':
+          state.flipY = !state.flipY;
+          break;
+        case 'reset':
+          setDefaults();
+          return;
+      }
+
+      drawImageToCanvas();
+    });
+  });
+
+  document.querySelectorAll('.tool-tab-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.tool-tab-btn').forEach((item) => {
+        item.classList.remove('active');
+      });
+
+      document.querySelectorAll('.tool-section-content').forEach((section) => {
+        section.classList.remove('active');
+      });
+
+      button.classList.add('active');
+
+      const target = $(button.dataset.target);
+      target?.classList.add('active');
+    });
+  });
+
+  // احفظ نص الزر الأصلي حتى يمكن استعادته عند إلغاء القص.
+  if (startCropBtn) {
+    startCropBtn.dataset.originalText =
+      startCropBtn.textContent.trim() || 'بدء القص';
+
+    startCropBtn.addEventListener('click', startCrop);
+  }
+
+  applyCropBtn?.addEventListener('click', applyCrop);
+
+  canvas.addEventListener('pointerdown', (event) => {
+    if (!crop.active) return;
+
+    event.preventDefault();
+    const point = getCanvasPoint(event);
+
+    crop.dragging = true;
+    crop.startX = Math.max(0, Math.min(canvas.width, point.x));
+    crop.startY = Math.max(0, Math.min(canvas.height, point.y));
+    crop.x = crop.startX;
+    crop.y = crop.startY;
+    crop.width = 0;
+    crop.height = 0;
+
+    canvas.setPointerCapture?.(event.pointerId);
+    drawImageToCanvas();
+  });
+
+  canvas.addEventListener('pointermove', (event) => {
+    if (!crop.active || !crop.dragging) return;
+
+    const point = getCanvasPoint(event);
+    const currentX = Math.max(0, Math.min(canvas.width, point.x));
+    const currentY = Math.max(0, Math.min(canvas.height, point.y));
+
+    crop.x = Math.min(crop.startX, currentX);
+    crop.y = Math.min(crop.startY, currentY);
+    crop.width = Math.abs(currentX - crop.startX);
+    crop.height = Math.abs(currentY - crop.startY);
+
+    drawImageToCanvas();
+  });
+
+  function finishCropDrag() {
+    if (!crop.dragging) return;
+
+    crop.dragging = false;
+
+    if (crop.width < 2 || crop.height < 2) {
+      crop.width = 0;
+      crop.height = 0;
+    }
+
+    drawImageToCanvas();
+  }
+
+  canvas.addEventListener('pointerup', finishCropDrag);
+  canvas.addEventListener('pointercancel', finishCropDrag);
+
+  downloadBtn?.addEventListener('click', downloadImage);
+  resetBtn?.addEventListener('click', setDefaults);
+  clearImageBtn?.addEventListener('click', clearImage);
+
+  updateLabels();
+})();
