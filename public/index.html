@@ -54,32 +54,47 @@
       object-fit: contain;
     }
 
-    .upload-label.dragover {
-      outline: 2px dashed #6c63ff;
-      background: rgba(108, 99, 255, 0.08);
+    /* تنسيق أزرار التبديل بين الأقسام (الفلاتر، التعديل اليدوي، القص) */
+    .tool-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px;
+      border-radius: 8px;
+    }
+
+    .tool-tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .tool-tab-btn.active {
+      background: #6c63ff;
+      border-color: #6c63ff;
+      font-weight: 700;
+    }
+
+    /* إخفاء الأقسام غير المكتطة وإظهار النشطة فقط */
+    .tool-section-content {
+      display: none;
+    }
+
+    .tool-section-content.active {
+      display: block;
     }
 
     @media (max-width: 900px) {
       .editor-section {
         grid-template-columns: 1fr;
-      }
-
-      .editor-section .preview-panel,
-      .editor-section .controls-panel {
-        grid-column: 1;
-        grid-row: auto;
-      }
-
-      .editor-section .preview-panel {
-        min-height: 420px;
-      }
-
-      .editor-section .canvas-stage {
-        min-height: 360px;
-      }
-
-      .editor-section .controls-panel {
-        max-height: none;
       }
     }
   </style>
@@ -90,6 +105,7 @@
 </head>
 
 <body>
+  <!-- نافذة تسجيل الدخول -->
   <div id="authModal" class="modal active">
     <div class="modal-content">
       <div id="loginForm" class="auth-form active">
@@ -98,25 +114,18 @@
           <h1>PixelCraft</h1>
           <p>سجل دخول أو أنشئ حساب لتبدأ</p>
         </div>
-
         <form id="loginFormElement" novalidate>
           <div class="form-group">
             <label for="loginEmail">البريد الإلكتروني</label>
             <input id="loginEmail" type="email" required>
           </div>
-
           <div class="form-group">
             <label for="loginPassword">كلمة المرور</label>
             <input id="loginPassword" type="password" required>
           </div>
-
           <button type="submit" class="primary-btn full">تسجيل الدخول</button>
           <div class="auth-divider">أو</div>
-
-          <button type="button" class="ghost-btn full" id="switchToSignupBtn">
-            إنشاء حساب جديد
-          </button>
-
+          <button type="button" class="ghost-btn full" id="switchToSignupBtn">إنشاء حساب جديد</button>
           <div id="loginError" class="error-message" role="alert"></div>
         </form>
       </div>
@@ -126,41 +135,33 @@
           <div class="brand-icon-auth">P</div>
           <h1>إنشاء حساب</h1>
         </div>
-
         <form id="signupFormElement" novalidate>
           <div class="form-group">
             <label for="signupName">الاسم</label>
             <input id="signupName" type="text" required>
           </div>
-
           <div class="form-group">
             <label for="signupEmail">البريد الإلكتروني</label>
             <input id="signupEmail" type="email" required>
           </div>
-
           <div class="form-group">
             <label for="signupPassword">كلمة المرور</label>
             <input id="signupPassword" type="password" minlength="6" required>
           </div>
-
           <div class="form-group">
             <label for="signupConfirm">تأكيد كلمة المرور</label>
             <input id="signupConfirm" type="password" minlength="6" required>
           </div>
-
           <button type="submit" class="primary-btn full">إنشاء حساب</button>
           <div class="auth-divider">أو</div>
-
-          <button type="button" class="ghost-btn full" id="switchToLoginBtn">
-            لديك حساب؟ تسجيل دخول
-          </button>
-
+          <button type="button" class="ghost-btn full" id="switchToLoginBtn">لديك حساب؟ تسجيل دخول</button>
           <div id="signupError" class="error-message" role="alert"></div>
         </form>
       </div>
     </div>
   </div>
 
+  <!-- التطبيق الرئيسي -->
   <div id="mainApp" class="page-shell hidden">
     <header class="topbar">
       <div class="brand-wrap">
@@ -169,7 +170,6 @@
           <span class="brand-name">PixelCraft</span>
         </div>
       </div>
-
       <div class="header-actions">
         <span id="userWelcome" class="user-welcome"></span>
         <button id="logoutBtn" class="ghost-btn">تسجيل الخروج</button>
@@ -183,7 +183,6 @@
             <span class="toolbar-pill">معاينة مباشرة</span>
             <span class="toolbar-pill muted" id="imageInfo">لا توجد صورة</span>
           </div>
-
           <div class="canvas-stage">
             <canvas id="editorCanvas" width="900" height="600"></canvas>
             <div id="emptyState" class="empty-state">
@@ -195,7 +194,7 @@
 
         <div class="panel controls-panel">
           <div class="panel-head">
-            <h2>إعدادات الصورة</h2>
+            <h2>أدوات تعديل الصورة</h2>
           </div>
 
           <div class="upload-box">
@@ -206,132 +205,128 @@
             </label>
           </div>
 
-          <div class="filters-section">
-            <h3>فلاتر جاهزة</h3>
-            <div class="filters-grid">
-              <button class="filter-btn active" data-filter="none">أصلي</button>
-              <button class="filter-btn" data-filter="grayscale">أبيض وأسود</button>
-              <button class="filter-btn" data-filter="sepia">سيبيا</button>
-              <button class="filter-btn" data-filter="vivid">حيوي</button>
-              <button class="filter-btn" data-filter="soft">ناعم</button>
-              <button class="filter-btn" data-filter="bright">مشرق</button>
-              <button class="filter-btn" data-filter="matte">مطفي</button>
-              <button class="filter-btn" data-filter="pink">وردي</button>
-              <button class="filter-btn" data-filter="warm">دافئ</button>
-              <button class="filter-btn" data-filter="cool">بارد</button>
-              <button class="filter-btn" data-filter="vintage">كلاسيكي</button>
-              <button class="filter-btn" data-filter="dramatic">درامي</button>
-              <button class="filter-btn" data-filter="faded">باهت</button>
-              <button class="filter-btn" data-filter="golden">ذهبي</button>
-              <button class="filter-btn" data-filter="rose">وردي ناعم</button>
-              <button class="filter-btn" data-filter="moody">غامق</button>
-              <button class="filter-btn" data-filter="crisp">واضح</button>
-              <button class="filter-btn" data-filter="pastel">باستيل</button>
-              <button class="filter-btn" data-filter="noir">نوار</button>
-              <button class="filter-btn" data-filter="arctic">ثلجي</button>
-              <button class="filter-btn" data-filter="sunset">غروب</button>
-              <button class="filter-btn" data-filter="fadedFilm">فيلم باهت</button>
-              <button class="filter-btn" data-filter="punch">قوي</button>
-              <button class="filter-btn" data-filter="dreamy">حالم</button>
-              <button class="filter-btn" data-filter="natural">طبيعي</button>
+          <!-- أزرار التبديل بين الأقسام (الفلاتر، التعديل اليدوي، القص) -->
+          <div class="tool-tabs">
+            <button type="button" class="tool-tab-btn active" data-target="filtersTab">الفلاتر</button>
+            <button type="button" class="tool-tab-btn" data-target="manualTab">التعديل اليدوي</button>
+            <button type="button" class="tool-tab-btn" data-target="cropTab">القص</button>
+          </div>
+
+          <!-- 1. قسم الفلاتر -->
+          <div id="filtersTab" class="tool-section-content active">
+            <div class="filters-section">
+              <h3>الفلاتر الجاهزة</h3>
+              <div class="filters-grid">
+                <button class="filter-btn active" data-filter="none">أصلي</button>
+                <button class="filter-btn" data-filter="grayscale">أبيض وأسود</button>
+                <button class="filter-btn" data-filter="sepia">سيبيا</button>
+                <button class="filter-btn" data-filter="vivid">حيوي</button>
+                <button class="filter-btn" data-filter="soft">ناعم</button>
+                <button class="filter-btn" data-filter="bright">مشرق</button>
+                <button class="filter-btn" data-filter="matte">مطفي</button>
+                <button class="filter-btn" data-filter="pink">وردي</button>
+                <button class="filter-btn" data-filter="warm">دافئ</button>
+                <button class="filter-btn" data-filter="cool">بارد</button>
+                <button class="filter-btn" data-filter="vintage">كلاسيكي</button>
+                <button class="filter-btn" data-filter="dramatic">درامي</button>
+                <button class="filter-btn" data-filter="faded">باهت</button>
+                <button class="filter-btn" data-filter="golden">ذهبي</button>
+                <button class="filter-btn" data-filter="rose">وردي ناعم</button>
+                <button class="filter-btn" data-filter="moody">غامق</button>
+                <button class="filter-btn" data-filter="crisp">واضح</button>
+                <button class="filter-btn" data-filter="pastel">باستيل</button>
+                <button class="filter-btn" data-filter="noir">نوار</button>
+                <button class="filter-btn" data-filter="arctic">ثلجي</button>
+                <button class="filter-btn" data-filter="sunset">غروب</button>
+                <button class="filter-btn" data-filter="fadedFilm">فيلم باهت</button>
+                <button class="filter-btn" data-filter="punch">قوي</button>
+                <button class="filter-btn" data-filter="dreamy">حالم</button>
+                <button class="filter-btn" data-filter="natural">طبيعي</button>
+              </div>
             </div>
           </div>
 
-          <div class="edit-tools">
-            <button type="button" data-action="rotateLeft">↶ تدوير لليسار</button>
-            <button type="button" data-action="rotateRight">↷ تدوير لليمين</button>
-            <button type="button" data-action="flipHorizontal">↔ قلب أفقي</button>
-            <button type="button" data-action="flipVertical">↕ قلب عمودي</button>
-            <button type="button" data-action="reset">إعادة ضبط</button>
-          </div>
-
-          <div class="controls-group">
-            <div class="control-row">
-              <label for="brightness">الإضاءة</label>
-              <span id="brightnessValue">100%</span>
+          <!-- 2. قسم التعديل اليدوي (الإضاءة، التباين، التدوير، إلخ) -->
+          <div id="manualTab" class="tool-section-content">
+            <div class="edit-tools" style="margin-bottom: 16px;">
+              <button type="button" data-action="rotateLeft">↶ تدوير لليسار</button>
+              <button type="button" data-action="rotateRight">↷ تدوير لليمين</button>
+              <button type="button" data-action="flipHorizontal">↔️ قلب أفقي</button>
+              <button type="button" data-action="flipVertical">↕️ قلب عمودي</button>
+              <button type="button" data-action="reset">إعادة ضبط</button>
             </div>
-            <input id="brightness" type="range" min="0" max="200" value="100">
-          </div>
 
-          <div class="controls-group">
-            <div class="control-row">
-              <label for="contrast">التباين</label>
-              <span id="contrastValue">100%</span>
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="brightness">الإضاءة</label>
+                <span id="brightnessValue">100%</span>
+              </div>
+              <input id="brightness" type="range" min="0" max="200" value="100">
             </div>
-            <input id="contrast" type="range" min="0" max="200" value="100">
-          </div>
 
-          <div class="controls-group">
-            <div class="control-row">
-              <label for="saturation">التشبع</label>
-              <span id="saturationValue">100%</span>
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="contrast">التباين</label>
+                <span id="contrastValue">100%</span>
+              </div>
+              <input id="contrast" type="range" min="0" max="200" value="100">
             </div>
-            <input id="saturation" type="range" min="0" max="200" value="100">
-          </div>
 
-          <div class="controls-group">
-            <div class="control-row">
-              <label for="blur">الضبابية</label>
-              <span id="blurValue">0px</span>
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="saturation">التشبع</label>
+                <span id="saturationValue">100%</span>
+              </div>
+              <input id="saturation" type="range" min="0" max="200" value="100">
             </div>
-            <input id="blur" type="range" min="0" max="10" step="0.1" value="0">
-          </div>
 
-          <div class="controls-group">
-            <div class="control-row">
-              <label for="sepia">اللون البني</label>
-              <span id="sepiaValue">0%</span>
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="blur">الضبابية</label>
+                <span id="blurValue">0px</span>
+              </div>
+              <input id="blur" type="range" min="0" max="10" step="0.1" value="0">
             </div>
-            <input id="sepia" type="range" min="0" max="100" value="0">
-          </div>
 
-          <div class="controls-group">
-            <div class="control-row">
-              <label for="grayscale">التدرج الرمادي</label>
-              <span id="grayscaleValue">0%</span>
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="sepia">اللون البني</label>
+                <span id="sepiaValue">0%</span>
+              </div>
+              <input id="sepia" type="range" min="0" max="100" value="0">
             </div>
-            <input id="grayscale" type="range" min="0" max="100" value="0">
-          </div>
 
-          <div class="controls-group">
-            <div class="control-row">
-              <label for="hue">تدوير الألوان</label>
-              <span id="hueValue">0°</span>
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="grayscale">التدرج الرمادي</label>
+                <span id="grayscaleValue">0%</span>
+              </div>
+              <input id="grayscale" type="range" min="0" max="100" value="0">
             </div>
-            <input id="hue" type="range" min="0" max="360" value="0">
-          </div>
 
-          <div class="controls-group split-controls">
-            <div>
-              <label for="rotation">الدوران</label>
-              <input id="rotation" type="range" min="-180" max="180" value="0">
-            </div>
-            <div>
-              <label for="zoom">التكبير</label>
-              <input id="zoom" type="range" min="50" max="200" value="100">
+            <div class="controls-group">
+              <div class="control-row">
+                <label for="hue">تدوير الألوان</label>
+                <span id="hueValue">0°</span>
+              </div>
+              <input id="hue" type="range" min="0" max="360" value="0">
             </div>
           </div>
 
-          <div class="toggle-row">
-            <label class="switch">
-              <input id="flipX" type="checkbox">
-              <span class="slider"></span>
-            </label>
-            <span>عكس أفقي</span>
+          <!-- 3. قسم القص -->
+          <div id="cropTab" class="tool-section-content">
+            <div style="text-align: center; padding: 20px 0;">
+              <p style="color: #aaa; margin-bottom: 16px; font-size: 14px;">أداة قص الصورة وتحديد الأبعاد</p>
+              <button type="button" id="startCropBtn" class="primary-btn full" style="margin-bottom: 10px;">بدء القص</button>
+              <button type="button" id="applyCropBtn" class="ghost-btn full">تطبيق القص</button>
+            </div>
           </div>
 
-          <div class="toggle-row">
-            <label class="switch">
-              <input id="flipY" type="checkbox">
-              <span class="slider"></span>
-            </label>
-            <span>عكس عمودي</span>
+          <div class="upload-actions" style="margin-top: 20px;">
+            <button type="button" id="clearImageBtn" class="clear-image-btn">
+              مسح الصورة
+            </button>
           </div>
-            <div class="upload-actions">
-    <button type="button" id="clearImageBtn" class="clear-image-btn">
-      مسح الصورة
-    </button>
-  </div>
 
           <div class="button-stack">
             <button id="downloadBtn" class="primary-btn full">تحميل الصورة</button>
@@ -341,5 +336,19 @@
       </section>
     </main>
   </div>
+
+  <script>
+    // كود بسيط لتشغيل التبديل بين الأقسام عند الضغط على الأزرار
+    document.querySelectorAll('.tool-tab-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.tool-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tool-section-content').forEach(content => content.classList.remove('active'));
+        
+        button.classList.add('active');
+        const targetId = button.getAttribute('data-target');
+        document.getElementById(targetId).classList.add('active');
+      });
+    });
+  </script>
 </body>
 </html>
