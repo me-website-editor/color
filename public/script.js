@@ -328,3 +328,6 @@
 
   updateLabels();
 })();
+document.getElementById('uploadTrigger')?.addEventListener('click', () => {
+  document.getElementById('imageUpload').click();
+});
