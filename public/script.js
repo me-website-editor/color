@@ -16,7 +16,9 @@
     return;
   }
 
-  // هذه العناصر موجودة في HTML المرسل.
+  const startCropBtn = $('startCropBtn');
+  const applyCropBtn = $('applyCropBtn');
+
   const controls = {
     brightness: $('brightness'),
     contrast: $('contrast'),
@@ -46,6 +48,17 @@
     filename: 'edited-image'
   };
 
+  const crop = {
+    active: false,
+    dragging: false,
+    startX: 0,
+    startY: 0,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0
+  };
+
   function updateLabels() {
     const suffixes = {
       brightness: '%',
@@ -61,6 +74,51 @@
       const label = $(`${key}Value`);
       if (label) label.textContent = `${state[key]}${suffix}`;
     }
+  }
+
+  function getCanvasPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+
+    return {
+      x: (event.clientX - rect.left) * (canvas.width / rect.width),
+      y: (event.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  function drawCropOverlay() {
+    if (!crop.active) return;
+
+    ctx.save();
+
+    // تعتيم المنطقة خارج مستطيل القص.
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (crop.width > 0 && crop.height > 0) {
+      ctx.clearRect(crop.x, crop.y, crop.width, crop.height);
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(1, canvas.width / 600);
+      ctx.setLineDash([8, 5]);
+      ctx.strokeRect(crop.x, crop.y, crop.width, crop.height);
+      ctx.setLineDash([]);
+
+      // خطوط إرشادية داخل حدود القص.
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(crop.x + crop.width / 3, crop.y);
+      ctx.lineTo(crop.x + crop.width / 3, crop.y + crop.height);
+      ctx.moveTo(crop.x + (crop.width * 2) / 3, crop.y);
+      ctx.lineTo(crop.x + (crop.width * 2) / 3, crop.y + crop.height);
+      ctx.moveTo(crop.x, crop.y + crop.height / 3);
+      ctx.lineTo(crop.x + crop.width, crop.y + crop.height / 3);
+      ctx.moveTo(crop.x, crop.y + (crop.height * 2) / 3);
+      ctx.lineTo(crop.x + crop.width, crop.y + (crop.height * 2) / 3);
+      ctx.stroke();
+    }
+
+    ctx.restore();
   }
 
   function drawImageToCanvas() {
@@ -97,6 +155,8 @@
 
     emptyState.classList.add('hidden');
     imageInfo.textContent = `${canvas.width} × ${canvas.height}`;
+
+    drawCropOverlay();
   }
 
   function setDefaults() {
@@ -118,17 +178,20 @@
   }
 
   function applyFilter(name) {
-    // يعتمد على FILTER_PRESETS المعرّف في filters.js إن كان موجودًا.
     const preset = window.FILTER_PRESETS?.[name];
 
     if (!preset) {
-      // الفلتر الأصلي يعيد التعديلات إلى القيم الافتراضية.
       if (name === 'none') setDefaults();
       return;
     }
 
     for (const [key, value] of Object.entries(preset)) {
-      if (key in defaults && key !== 'rotation' && key !== 'flipX' && key !== 'flipY') {
+      if (
+        key in defaults &&
+        key !== 'rotation' &&
+        key !== 'flipX' &&
+        key !== 'flipY'
+      ) {
         state[key] = value;
         if (controls[key]) controls[key].value = value;
       }
@@ -162,6 +225,7 @@
       image.onload = () => {
         state.image = image;
         state.filename = file.name.replace(/\.[^/.]+$/, '') || 'edited-image';
+        cancelCrop();
         setDefaults();
         drawImageToCanvas();
       };
@@ -196,6 +260,8 @@
   }
 
   function clearImage() {
+    cancelCrop();
+
     state.image = null;
     state.filename = 'edited-image';
 
@@ -210,105 +276,89 @@
     setDefaults();
   }
 
-  // تحديث الصورة عند تغيير أدوات التعديل اليدوي.
-  Object.entries(controls).forEach(([key, control]) => {
-    if (!control) return;
+  function startCrop() {
+    if (!state.image) {
+      alert('ارفع صورة أولًا قبل القص.');
+      return;
+    }
 
-    control.addEventListener('input', () => {
-      state[key] = Number(control.value);
-      updateLabels();
-      drawImageToCanvas();
-    });
-  });
+    if (crop.active) {
+      cancelCrop();
+      return;
+    }
 
-  fileInput.addEventListener('change', (event) => {
-    loadImage(event.target.files?.[0]);
-  });
+    crop.active = true;
+    crop.dragging = false;
+    crop.x = 0;
+    crop.y = 0;
+    crop.width = 0;
+    crop.height = 0;
 
-  // دعم السحب والإفلات.
-  if (uploadLabel) {
-    uploadLabel.addEventListener('dragover', (event) => {
-      event.preventDefault();
-      uploadLabel.classList.add('dragover');
-    });
+    canvas.classList.add('cropping');
+    canvas.style.cursor = 'crosshair';
 
-    uploadLabel.addEventListener('dragleave', () => {
-      uploadLabel.classList.remove('dragover');
-    });
+    if (startCropBtn) startCropBtn.textContent = 'إلغاء القص';
 
-    uploadLabel.addEventListener('drop', (event) => {
-      event.preventDefault();
-      uploadLabel.classList.remove('dragover');
-      loadImage(event.dataTransfer.files?.[0]);
-    });
+    drawImageToCanvas();
   }
 
-  // أزرار الفلاتر.
-  document.querySelectorAll('.filter-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach((item) => {
-        item.classList.remove('active');
-      });
+  function cancelCrop() {
+    crop.active = false;
+    crop.dragging = false;
+    crop.x = 0;
+    crop.y = 0;
+    crop.width = 0;
+    crop.height = 0;
 
-      button.classList.add('active');
-      applyFilter(button.dataset.filter);
-    });
-  });
+    canvas.classList.remove('cropping');
+    canvas.style.cursor = '';
 
-  // التدوير والقلب وإعادة الضبط.
-  document.querySelectorAll('.edit-tools [data-action]').forEach((button) => {
-    button.addEventListener('click', () => {
-      switch (button.dataset.action) {
-        case 'rotateLeft':
-          state.rotation -= 90;
-          break;
-        case 'rotateRight':
-          state.rotation += 90;
-          break;
-        case 'flipHorizontal':
-          state.flipX = !state.flipX;
-          break;
-        case 'flipVertical':
-          state.flipY = !state.flipY;
-          break;
-        case 'reset':
-          setDefaults();
-          return;
-      }
+    if (startCropBtn) {
+      startCropBtn.textContent =
+        startCropBtn.dataset.originalText || 'بدء القص';
+    }
 
+    if (state.image) drawImageToCanvas();
+  }
+
+  function applyCrop() {
+    if (!state.image) {
+      alert('ارفع صورة أولًا قبل القص.');
+      return;
+    }
+
+    if (!crop.active || crop.width < 2 || crop.height < 2) {
+      alert('اضغط واسحب على الصورة لتحديد منطقة القص أولًا.');
+      return;
+    }
+
+    const x = Math.max(0, Math.round(crop.x));
+    const y = Math.max(0, Math.round(crop.y));
+    const width = Math.min(canvas.width - x, Math.round(crop.width));
+    const height = Math.min(canvas.height - y, Math.round(crop.height));
+
+    if (width < 1 || height < 1) {
+      alert('منطقة القص غير صالحة. حاول تحديد منطقة أكبر.');
+      return;
+    }
+
+    const croppedCanvas = document.createElement('canvas');
+    croppedCanvas.width = width;
+    croppedCanvas.height = height;
+
+    const croppedCtx = croppedCanvas.getContext('2d');
+    croppedCtx.drawImage(canvas, x, y, width, height, 0, 0, width, height);
+
+    const croppedImage = new Image();
+
+    croppedImage.onload = () => {
+      state.image = croppedImage;
+      state.rotation = 0;
+      state.flipX = false;
+      state.flipY = false;
+
+      cancelCrop();
       drawImageToCanvas();
-    });
-  });
+    };
 
-  // التبويبات: موجودة أيضًا في HTML؛ هذا المعالج يضمن عملها هنا.
-  document.querySelectorAll('.tool-tab-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      document.querySelectorAll('.tool-tab-btn').forEach((item) => {
-        item.classList.remove('active');
-      });
-
-      document.querySelectorAll('.tool-section-content').forEach((section) => {
-        section.classList.remove('active');
-      });
-
-      button.classList.add('active');
-
-      const target = $(button.dataset.target);
-      target?.classList.add('active');
-    });
-  });
-
-  $('startCropBtn')?.addEventListener('click', () => {
-    alert('أداة القص غير مفعّلة بعد.');
-  });
-
-  $('applyCropBtn')?.addEventListener('click', () => {
-    alert('أداة القص غير مفعّلة بعد.');
-  });
-
-  downloadBtn?.addEventListener('click', downloadImage);
-  resetBtn?.addEventListener('click', setDefaults);
-  clearImageBtn?.addEventListener('click', clearImage);
-
-  updateLabels();
-})();
+    croppedImage.src = cropped
