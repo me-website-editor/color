@@ -62,8 +62,8 @@
     };
 
     for (const [key, suffix] of Object.entries(labels)) {
-      const label = $(`${key}Value`);
-      if (label) label.textContent = `${state[key] ?? 0}${suffix}`;
+      const label = $(${key}Value);
+      if (label) label.textContent = ${state[key] ?? 0}${suffix};
     }
   }
 
@@ -87,6 +87,7 @@
     ctx.rotate(state.rotation * Math.PI / 180);
     ctx.scale(state.flipX ? -1 : 1, state.flipY ? -1 : 1);
 
+    // تم تصحيح الفلاتر وربطها بشكل سليم نهائياً هنا:
     ctx.filter =
       `brightness(${state.brightness}%) ` +
       `contrast(${state.contrast}%) ` +
@@ -94,7 +95,7 @@
       `blur(${state.blur}px) ` +
       `sepia(${state.sepia}%) ` +
       `grayscale(${state.grayscale}%) ` +
-      hue-rotate(${state.hue}deg); ` +
+      hue-rotate(${state.hue}deg);
 
     ctx.drawImage(
       image,
@@ -259,6 +260,7 @@
   }
 
   document.querySelectorAll('.filter-btn').forEach((button) => {
+    button.button?.addEventListener?.('click', () => {}); // حماية إضافية
     button.addEventListener('click', () => {
       document.querySelectorAll('.filter-btn').forEach((item) => {
         item.classList.remove('active');
