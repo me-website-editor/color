@@ -63,7 +63,7 @@
 
     for (const [key, suffix] of Object.entries(labels)) {
       const label = $(${key}Value);
-      if (label) label.textContent = ${state[key]}${suffix};
+      if (label) label.textContent = ${state[key] ?? 0}${suffix};
     }
   }
 
@@ -310,7 +310,7 @@
     });
   });
 
-  // أزرار القص (تجهيز للتشغيل)
+  // أزرار القص
   const startCropBtn = $('startCropBtn');
   const applyCropBtn = $('applyCropBtn');
 
